@@ -56,10 +56,12 @@ add level:
 missing semicolons (can be regressive)
 */
 
+// Helper function to determine if a string contains a character or not
 String.prototype.has = function(c) {
   return this.indexOf(c) > -1;
 };
 
+// Export JSMin which we are about to create
 exports.jsmin = jsmin;
 
 /**
@@ -80,6 +82,7 @@ function jsmin(input, level, comment) {
   // If no comment has been provided, fallback to an empty string
   if (!comment) comment = '';
 
+  // Set up variables and constants
   var a = '',
         b = '',
         EOF = -1,
@@ -103,29 +106,45 @@ function jsmin(input, level, comment) {
   linefeed.
   */
 
-  var iChar = 0, lInput = input.length;
+  // Create an index of the current character and memoize the length of the input
+  var iChar = 0,
+      inputLen = input.length;
   function getc() {
-
+    // Memoize the next character as c
     var c = theLookahead;
-    if(iChar == lInput) {
+
+    // If we are at end of the input, return EOF
+    if(iChar == inputLen) {
       return EOF;
     }
+
+    // Set the next character to EOF
     theLookahead = EOF;
+
+    // If the memoized next character was EOF, update it to the current character and move to the next character
     if(c == EOF) {
       c = input.charAt(iChar);
       ++iChar;
     }
+
+    // If the charater is greater than whitespace or a linefeed, return it
+    // TODO: Does c >= ' ' do anything special?
     if(c >= ' ' || c == '\n') {
       return c;
     }
+
+    // If the character is a carriage return, return it as a linefeed
     if(c == '\r') {
       return '\n';
     }
+
+    // If we have not returned since then, return a space
     return ' ';
   }
+
   function getcIC() {
     var c = theLookahead;
-    if(iChar == lInput) {
+    if(iChar == inputLen) {
       return EOF;
     }
     theLookahead = EOF;
