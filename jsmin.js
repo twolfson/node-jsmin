@@ -190,8 +190,8 @@ function jsmin(input, level, comment) {
           for(; ; ) {
             c = getc();
 
-            // If we hit a newline, null character, EOF, or something similar, return it
-            // FIXME: If there is a tab in a comment, the comment will terminate early
+            // If we hit a newline or EOF, return it
+            // Note: Nothing will happen in the case of a tab since getc returns this as whitespace
             if(c <= '\n') {
               return c;
             }
@@ -212,7 +212,7 @@ function jsmin(input, level, comment) {
             // Set up a return comment to build on
             var d = '/*!';
 
-            // Loop while...
+            // Loop infinitely
             for(; ; ) {
               // Get the next character
               c = getcIC();
@@ -241,25 +241,34 @@ function jsmin(input, level, comment) {
               }
             }
           } else {
-            //unimportant comment
+          // Otherwise, we are on an unimportant comment
+            // Loop infinitely
             for(; ; ) {
+              // Grab the next character
               switch(getc()) {
+                // If it is an asterisk and the following character is a slash
                 case '*':
                   if(peek() == '/') {
+                    // Then move the pointer to the slash and return padding
                     getc();
                     return ' ';
                   }
                   break;
                 case EOF:
+                // Otherwise, if it is EOF, throw an error
                   throw 'Error: Unterminated comment.';
+                // Otherwise, do nothing
               }
             }
           }
           break;
         default:
+        // Otherwise, return the current character (which is a slash)
           return c;
       }
     }
+
+    // Otherwise, return the current character
     return c;
   }
 
@@ -272,26 +281,43 @@ function jsmin(input, level, comment) {
   action recognizes a regular expression if it is preceded by ( or , or =.
   */
 
+  // Over-complicated action function
   function action(d) {
-
+    // Create a return array
     var r = [];
 
+    // If the action id is 1, add on the current a to the array
     if(d == 1) {
       r.push(a);
     }
 
+    // If the actiond id is 1 or 2
     if(d < 3) {
+      // Load b into a
       a = b;
+
+      // If b was a single or double quote (i.e. opening a string)
+      // DEV: /['"]/.test(a)
       if(a == '\'' || a == '"') {
+        // Loop infinitely
         for(; ; ) {
+          // Push the current character to the array
           r.push(a);
+
+          // Get the next character
           a = getc();
+
+          // If the next character was our opening quote, stop looping
           if(a == b) {
             break;
           }
+
+          // If line break or EOF is reached, throw an error
           if(a <= '\n') {
             throw 'Error: unterminated string literal: ' + a;
           }
+
+          // If there is a slash (multi-line separator), save it and skip to the next character
           if(a == '\\') {
             r.push(a);
             a = getc();
@@ -300,11 +326,18 @@ function jsmin(input, level, comment) {
       }
     }
 
+    // Get the next character (skipping over comments)
     b = next();
 
+    // If it is a slash and looks like a regular expression
+    // PERSONAL_TODO: Determine what 'a' is and why this works
     if(b == '/' && '(,=:[!&|'.has(a)) {
+      // Add a then b onto the array
+      // DEV: r.push(a, b);
       r.push(a);
       r.push(b);
+
+
       for(; ; ) {
         a = getc();
         if(a == '/') {
@@ -424,4 +457,3 @@ function jsmin(input, level, comment) {
   }
   return ret;
 }
-
