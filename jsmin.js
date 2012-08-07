@@ -109,6 +109,8 @@ function jsmin(input, level, comment) {
   // Create an index of the current character and memoize the length of the input
   var iChar = 0,
       inputLen = input.length;
+
+  // getc is a helper function to determine the current character
   function getc() {
     // Memoize the next character as c
     var c = theLookahead;
@@ -127,8 +129,8 @@ function jsmin(input, level, comment) {
       ++iChar;
     }
 
-    // If the charater is greater than whitespace or a linefeed, return it
-    // TODO: Does c >= ' ' do anything special?
+    // If the character is of human importance or is a linefeed, return it
+    // Nerd fun: ' ' has a charCode of 32. Any characters below that are either tabs, line feeds, or something not that interesting. http://www.asciitable.com/
     if(c >= ' ' || c == '\n') {
       return c;
     }
@@ -142,6 +144,7 @@ function jsmin(input, level, comment) {
     return ' ';
   }
 
+  // getcIC is extremely similar to getc
   function getcIC() {
     var c = theLookahead;
     if(iChar == inputLen) {
@@ -152,16 +155,18 @@ function jsmin(input, level, comment) {
       c = input.charAt(iChar);
       ++iChar;
     }
+
+    // Except instead when the current character is a carriage return, we return a carriage return
     if(c >= ' ' || c == '\n' || c == '\r') {
       return c;
     }
+
     return ' ';
   }
 
 
   /* peek -- get the next character without getting it.
   */
-
   function peek() {
     theLookahead = getc();
     return theLookahead;
@@ -171,42 +176,67 @@ function jsmin(input, level, comment) {
   /* next -- get the next character, excluding comments. peek() is used to see
   if a '/' is followed by a '/' or '*'.
   */
-
   function next() {
-
+    // Get the next character
     var c = getc();
+
+    // If it is a slash (indicitvate of regexp, multi-line strings, or comments)
     if(c == '/') {
+      // Read in the following character
       switch(peek()) {
+        // If it is a slash, then this is a comment (i.e. // I am a comment )
         case '/':
+          // Loop while...
           for(; ; ) {
             c = getc();
+
+            // If we hit a newline, null character, EOF, or something similar, return it
+            // FIXME: If there is a tab in a comment, the comment will terminate early
             if(c <= '\n') {
               return c;
             }
           }
           break;
         case '*':
-          //this is a comment. What kind?
+          // If is an asterisk, then this is a multi-line comment (i.e. /* I am a multi-line comment */)
+          // JSMin is configured to automatically save important comment (i.e. ones with /*! at the start */)
+
+          // Move the pointer onto the asterisk
           getc();
+
+          // If the following character is an exclamation point (i.e. we are working with an important comment)
           if(peek() == '!') {
-            // kill the extra one
+            // Move the pointer onto the exclamation point
             getc();
-            //important comment
+            
+            // Set up a return comment to build on
             var d = '/*!';
+
+            // Loop while...
             for(; ; ) {
-              c = getcIC(); // let it know it's inside an important comment
+              // Get the next character
+              c = getcIC();
+
               switch(c) {
+                // If it is an asterisk
                 case '*':
+                  // and the character after that is a slash, then we are closing the comment
                   if(peek() == '/') {
+                    // Move the cursor onto the next slash
                     getc();
+
+                    // and return the final comment
                     return d + '*/';
                   }
                   break;
+
                 case EOF:
+                // Otherwise, if the next character is EOF, throw an error
                   throw 'Error: Unterminated comment.';
+
                 default:
-                  //modern JS engines handle string concats much better than the 
-                  //array+push+join hack.
+                // Otherwise, add on the character to our buffered comment
+                // Developer notes: Modern JS engines handle string concats much better than the array+push+join hack.
                   d += c;
               }
             }
