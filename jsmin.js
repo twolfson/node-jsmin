@@ -337,22 +337,35 @@ function jsmin(input, level, comment) {
       r.push(a);
       r.push(b);
 
-
+      // Loop infinitely
       for(; ; ) {
+        // Get the next character
         a = getc();
+
+        // If it closes the regexp, stop looping
         if(a == '/') {
           break;
         } else if(a == '\\') {
+        // Otherwise, if it is is a slash (escaping the next character)
+          // Save it to the array
           r.push(a);
+
+          // Retrieve the next character
           a = getc();
         } else if(a <= '\n') {
+        // Otherwise, if it is a line break or EOF, throw an error
           throw 'Error: unterminated Regular Expression literal';
         }
+
+        // Save the character to our buffer
         r.push(a);
       }
+
+      // Now that we are out of the regular expression, move off of the last slash
       b = next();
     }
 
+    // Join together the buffer and return
     return r.join('');
   }
 
@@ -364,24 +377,38 @@ function jsmin(input, level, comment) {
   Most spaces and linefeeds will be removed.
   */
 
+  // Minification function
   function m() {
-
+    // Create a buffered array to return
     var r = [];
+
+    // Reset a to an empty string
     a = '';
 
+    // Get the next character and delete it from the buffer
     r.push(action(3));
 
+    // While we are not at EOF
     while(a != EOF) {
+      // Depending on the next character?
+      // TODO: wtf is a?
       switch(a) {
+        // If a is whitespace
         case ' ':
+          // If b is alphanumeric, output a, copy b to a, get b
+          // TODO: I am officially confused.
           if(isAlphanum(b)) {
             r.push(action(1));
           } else {
+          // Otherwise, copy b to a, get b (skipping output of a)
             r.push(action(2));
           }
           break;
         case '\n':
+        // If a is a line break, then...
           switch(b) {
+            // If a is starting some scoping or doing a unary operation, then output a (line break), copy b to a, get b
+            // TODO: huh?
             case '{':
             case '[':
             case '(':
@@ -390,12 +417,19 @@ function jsmin(input, level, comment) {
               r.push(action(1));
               break;
             case ' ':
+            // Otherwise, if it is whitespace, move to the next b
               r.push(action(3));
               break;
             default:
+            // Otherwise
+              // If b is alphanumeric, output a, copy b to a, get the next b
+              // TODO: huh?
               if(isAlphanum(b)) {
                 r.push(action(1));
               } else {
+              // Otherwise, if we are on the weakest minification and b is not a linebreak, output a
+                // In both cases, copy b to a and get the next b
+                // TODO: huh on a/b copying
                 if(level == 1 && b != '\n') {
                   r.push(action(1));
                 } else {
@@ -405,19 +439,32 @@ function jsmin(input, level, comment) {
           }
           break;
         default:
+        // Otherwise (a is not whitespace or a line feed)
           switch(b) {
+            // If b is whitespace
             case ' ':
+              // If a is alphanumeric, output it, swap b to a, get the next b and break out
+              // TODO: huh a/b?
               if(isAlphanum(a)) {
                 r.push(action(1));
                 break;
               }
+              // DEV: Use an else statement
+              // Otherwise, get the next b
               r.push(action(3));
               break;
             case '\n':
+            // If b is a line feed
+              // If we are on the weak minification and a is not a line feed as well (not possible due to previous switch?)
+              // Then, output a, copy b to a, get the next b
+              // TODO: huh a/b?
               if(level == 1 && a != '\n') {
                 r.push(action(1));
               } else {
+              // Otherwise
                 switch(a) {
+                  // If we are closing an object or quotes before this
+                  // TODO: Right? since a is before a? (so tired and confused)
                   case '}':
                   case ']':
                   case ')':
@@ -425,22 +472,32 @@ function jsmin(input, level, comment) {
                   case '-':
                   case '"':
                   case '\'':
+                    // If we are doing aggressive minification, ignore current a and b. Get the next b.
+                    // TODO: huh? a/b?
                     if(level == 3) {
                       r.push(action(3));
                     } else {
+                    // Otherwise, output a, copy b to a, get the next b
+                    // TODO: huh? a/b?
                       r.push(action(1));
                     }
                     break;
                   default:
+                  // Otherwise
+                    // If a is alphanumeric, output a, copy b to a, get the next b
+                    // TODO: huh?
                     if(isAlphanum(a)) {
                       r.push(action(1));
                     } else {
+                    // Otherwise, get the next b
                       r.push(action(3));
                     }
                 }
               }
               break;
             default:
+            // Othrwise (b is not whitespace or a linefeed), output a, copy b to a, get the next b
+            // TODO: huh?
               r.push(action(1));
               break;
           }
@@ -450,10 +507,14 @@ function jsmin(input, level, comment) {
     return r.join('');
   }
 
+  // Process the input into its minified compliment
   ret = m(input);
 
+  // If there is a comment, add it on
   if (comment) {
     return comment + '\n' + ret;
   }
+
+  // Return the comment + minified code
   return ret;
 }
