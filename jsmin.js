@@ -61,10 +61,23 @@ String.prototype.has = function(c) {
 };
 
 exports.jsmin = jsmin;
+
+/**
+ * JSMin function
+ * @param {String} input String to minify on
+ * @param {Number} [level=2] Level of compression to use (1 - 3; min - aggro). See license block for more info.
+ * @param {String} [comment=""] Comment to do prepend to final output with
+ * @returns {String} Minified code
+ */
 function jsmin(input, level, comment) {
 
+  // If no input is provided, return an empty string
   if (!input) return '';
+
+  // If there is no level, fallback to 2
   if (!level) level = 2;
+
+  // If no comment has been provided, fallback to an empty string
   if (!comment) comment = '';
 
   var a = '',
