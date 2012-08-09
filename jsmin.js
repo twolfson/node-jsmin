@@ -74,6 +74,7 @@ exports.jsmin = jsmin;
 function jsmin(input, level, comment) {
 
   // If no input is provided, return an empty string
+  // DEV: Move level, comment into options object
   if (!input) return '';
 
   // If there is no level, fallback to 2
@@ -90,6 +91,7 @@ function jsmin(input, level, comment) {
         DIGITS = '0123456789',
         ALNUM = LETTERS + DIGITS + '_$\\',
         theLookahead = EOF;
+  // DEV: EOF should be an object or unique reference
 
 
   /* isAlphanum -- return true if the character is a letter, digit, underscore,
@@ -100,6 +102,8 @@ function jsmin(input, level, comment) {
     return c != EOF && (ALNUM.has(c) || c.charCodeAt(0) > 126);
   }
 
+  // DEV: Whenever there is a <= ' ', change that to charCodeAt <= 10 || isEOF (more semantic comparisons)
+  // DEV: Even better would be isCtrlChar which is sugar on top of charCodeAt || isEOF
 
   /* getc(IC) -- return the next character. Watch out for lookahead. If the
   character is a control character, translate it to a space or
