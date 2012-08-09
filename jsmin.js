@@ -262,15 +262,9 @@ function jsmin(input, level, comment) {
                 len = retVal.length,
                 lenMinus2 = len - 2;
 
-            // Remove unnecessary asterisks as JSMin has done before
+            // Remove non-head/tail asterisks as JSMin has done before
             retVal = retVal.replace(/\*/g, function removeAsterisk (word, index) {
-              // If this is a head or tail asterisk, return it
-              if (index === 1 || index === lenMinus2) {
-                return '*';
-              } else {
-              // Otherwise, return nothing
-                return '';
-              }
+              return (index === 1 || index === lenMinus2) ? '*' : '';
             });
 
             // Return the retVal;
