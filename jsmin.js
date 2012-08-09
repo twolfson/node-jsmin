@@ -247,11 +247,10 @@ function jsmin(input, level, comment) {
         return readUntil([isCtrlChar]);
       } else if (nextChar === '*') {
       // Otherwise, if it is an asterisk, then this is a multi-line comment (i.e. /* I am a multi-line comment */)
-      // JSMin is configured to automatically save important comment (i.e. ones with /*! at the start */)
         // Move the pointer onto the asterisk
         file.next();
 
-        // If the following character is an exclamation point (i.e. we are working with an important comment)
+        // If this comment is an important comment (i.e. the following character is an exclamation point -- /*! Important comment */), we are required to save it
         if(file.peek() === '!') {
           // Move the pointer onto the exclamation point
           file.next();
