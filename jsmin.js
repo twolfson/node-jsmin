@@ -89,8 +89,7 @@ function jsmin(input, level, comment) {
       EOF = -1,
       LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
       DIGITS = '0123456789',
-      ALNUM = LETTERS + DIGITS + '_$\\',
-      theLookahead = EOF;
+      ALNUM = LETTERS + DIGITS + '_$\\';
   // DEV: EOF should be an object or unique reference
 
   /* isAlphanum -- return true if the character is a letter, digit, underscore,
@@ -137,9 +136,7 @@ function jsmin(input, level, comment) {
     // This function is explicity for important comments (i.e. /*! */)
     // It is possible for this to contain carriage returns and we require unaltered content since these could be licenses (main reason to use important comment).
     nextImportant: function nextImportant () {
-      // Localize the next character as char
-      var char = theLookahead,
-          pointer = file.pointer,
+      var pointer = file.pointer,
           end = file.end;
 
       // If we are at end of the file, return EOF
@@ -147,18 +144,11 @@ function jsmin(input, level, comment) {
         return EOF;
       }
 
-      // Reset the next character to EOF
-      // If you are wondering when theLookahead will never be EOF, it is set in `file.peek` to the next character
-      theLookahead = EOF;
+      // Set the current character to our index 
+      char = input.charAt(pointer);
 
-      // If the placeholder was junk (theLookahead held no data)
-      if(isEOF(char)) {
-        // Set the current character to our index 
-        char = input.charAt(pointer);
-
-        // Increment the pointer
-        file.pointer += 1;
-      }
+      // Increment the pointer
+      file.pointer += 1;
 
       // If the character is not of human importance (is a control character besides line feed and carraige return), cast it to a space
       if(isCtrlChar(char) && char !== '\n' && char !== '\r') {
@@ -185,18 +175,25 @@ function jsmin(input, level, comment) {
       return char;
     },
     /**
-     * Function that gets the next character without getting it
+     * Function that gets the next character
      * @returns {String} Next character (length 1)
      */
     peek: function peek () {
-      theLookahead = this.next();
-      return theLookahead;
+      // Grab the next char
+      var nextChar = this.next();
+
+      // Decrement the file pointer
+      this.pointer -= 1;
+
+      // Return the next character
+      return nextChar;
     }
   };
 
-  /* next -- get the next character, excluding comments. file.peek() is used to see
-  if a '/' is followed by a '/' or '*'.
-  */
+  /**
+   * Function that gets the next character excluding non-important comments.
+   * @returns {String} Next character (length 1)
+   */
   function next() {
     // Get the next character
     var c = file.next();
