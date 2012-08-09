@@ -300,10 +300,10 @@ function jsmin(input, level, comment) {
     // Push on a to the the array
     retArr.push(a);
 
-    action12Shared(retArr);
+    _copyBtoA(retArr);
 
     // Return the retArr
-    return action123Shared(retArr);
+    return _getNextB(retArr);
   }
 
   function action2() {
@@ -311,19 +311,19 @@ function jsmin(input, level, comment) {
     var retArr = [];
 
     // Call the shared function
-    action12Shared(retArr);
+    _copyBtoA(retArr);
 
     // Return the retArr
-    return action123Shared(retArr);
+    return _getNextB(retArr);
   }
 
   function action3() {
     var retArr = [];
 
-    return action123Shared(retArr);
+    return _getNextB(retArr);
   }
 
-  function action12Shared(r) {
+  function _copyBtoA(retArr) {
     // Load b into a
     a = b;
 
@@ -333,7 +333,7 @@ function jsmin(input, level, comment) {
       // Loop infinitely
       for(; ; ) {
         // Push the current character to the array
-        r.push(a);
+        retArr.push(a);
 
         // Get the next character
         a = file.next();
@@ -350,14 +350,14 @@ function jsmin(input, level, comment) {
 
         // If there is a slash (multi-line separator), save it and skip to the next character
         if(a == '\\') {
-          r.push(a);
+          retArr.push(a);
           a = file.next();
         }
       }
     }
   }
 
-  function action123Shared(r) {
+  function _getNextB(retArr) {
     // Get the next character (skipping over comments)
     b = next();
 
@@ -366,8 +366,8 @@ function jsmin(input, level, comment) {
     if(b == '/' && '(,=:[!&|'.has(a)) {
       // Add a then b onto the array
       // DEV: r.push(a, b);
-      r.push(a);
-      r.push(b);
+      retArr.push(a);
+      retArr.push(b);
 
       // Loop infinitely
       for(; ; ) {
@@ -380,7 +380,7 @@ function jsmin(input, level, comment) {
         } else if(a == '\\') {
         // Otherwise, if it is is a slash (escaping the next character)
           // Save it to the array
-          r.push(a);
+          retArr.push(a);
 
           // Retrieve the next character
           a = file.next();
@@ -390,7 +390,7 @@ function jsmin(input, level, comment) {
         }
 
         // Save the character to our buffer
-        r.push(a);
+        retArr.push(a);
       }
 
       // Now that we are out of the regular expression, move off of the last slash
@@ -398,24 +398,8 @@ function jsmin(input, level, comment) {
     }
 
     // Join together the buffer and return
-    return r.join('');
+    return retArr.join('');
   }
-
-  // Over-complicated action function
-  function action(d) {
-    var retVal;
-
-    if (d === 1) {
-      retVal = action1();
-    } else if (d === 2) {
-      retVal = action2();
-    } else if (d === 3) {
-      retVal = action3();
-    }
-
-    return retVal;    
-  }
-
 
   /* m -- Copy the input to the output, deleting the characters which are
   insignificant to JavaScript. Comments will be removed. Tabs will be
@@ -433,7 +417,7 @@ function jsmin(input, level, comment) {
     a = '';
 
     // Get the next character and delete it from the buffer
-    r.push(action(3));
+    r.push(action3());
 
     // While we are not at EOF
     while(a != EOF) {
@@ -445,10 +429,10 @@ function jsmin(input, level, comment) {
           // If b is alphanumeric, output a, copy b to a, get b
           // TODO: I am officially confused.
           if(isAlphanum(b)) {
-            r.push(action(1));
+            r.push(action1());
           } else {
           // Otherwise, copy b to a, get b (skipping output of a)
-            r.push(action(2));
+            r.push(action2());
           }
           break;
         case '\n':
@@ -461,26 +445,26 @@ function jsmin(input, level, comment) {
             case '(':
             case '+':
             case '-':
-              r.push(action(1));
+              r.push(action1());
               break;
             case ' ':
             // Otherwise, if it is whitespace, move to the next b
-              r.push(action(3));
+              r.push(action3());
               break;
             default:
             // Otherwise
               // If b is alphanumeric, output a, copy b to a, get the next b
               // TODO: huh?
               if(isAlphanum(b)) {
-                r.push(action(1));
+                r.push(action1());
               } else {
               // Otherwise, if we are on the weakest minification and b is not a linebreak, output a
                 // In both cases, copy b to a and get the next b
                 // TODO: huh on a/b copying
                 if(level == 1 && b != '\n') {
-                  r.push(action(1));
+                  r.push(action1());
                 } else {
-                  r.push(action(2));
+                  r.push(action2());
                 }
               }
           }
@@ -493,12 +477,12 @@ function jsmin(input, level, comment) {
               // If a is alphanumeric, output it, swap b to a, get the next b and break out
               // TODO: huh a/b?
               if(isAlphanum(a)) {
-                r.push(action(1));
+                r.push(action1());
                 break;
               }
               // DEV: Use an else statement
               // Otherwise, get the next b
-              r.push(action(3));
+              r.push(action3());
               break;
             case '\n':
             // If b is a line feed
@@ -506,7 +490,7 @@ function jsmin(input, level, comment) {
               // Then, output a, copy b to a, get the next b
               // TODO: huh a/b?
               if(level == 1 && a != '\n') {
-                r.push(action(1));
+                r.push(action1());
               } else {
               // Otherwise
                 switch(a) {
@@ -522,11 +506,11 @@ function jsmin(input, level, comment) {
                     // If we are doing aggressive minification, ignore current a and b. Get the next b.
                     // TODO: huh? a/b?
                     if(level == 3) {
-                      r.push(action(3));
+                      r.push(action3());
                     } else {
                     // Otherwise, output a, copy b to a, get the next b
                     // TODO: huh? a/b?
-                      r.push(action(1));
+                      r.push(action1());
                     }
                     break;
                   default:
@@ -534,10 +518,10 @@ function jsmin(input, level, comment) {
                     // If a is alphanumeric, output a, copy b to a, get the next b
                     // TODO: huh?
                     if(isAlphanum(a)) {
-                      r.push(action(1));
+                      r.push(action1());
                     } else {
                     // Otherwise, get the next b
-                      r.push(action(3));
+                      r.push(action3());
                     }
                 }
               }
@@ -545,7 +529,7 @@ function jsmin(input, level, comment) {
             default:
             // Othrwise (b is not whitespace or a linefeed), output a, copy b to a, get the next b
             // TODO: huh?
-              r.push(action(1));
+              r.push(action1());
               break;
           }
       }
