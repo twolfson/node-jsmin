@@ -99,11 +99,32 @@ function jsmin(input, level, comment) {
   */
 
   function isAlphanum(c) {
-    return c != EOF && (ALNUM.has(c) || c.charCodeAt(0) > 126);
+    return !isEOF(c) && (ALNUM.has(c) || c.charCodeAt(0) > 126);
   }
 
-  // DEV: Whenever there is a <= ' ', change that to charCodeAt <= 10 || isEOF (more semantic comparisons)
-  // DEV: Even better would be isCtrlChar which is sugar on top of charCodeAt || isEOF
+  // Helper function for determining if a character is a control one.
+  // We keep raw function separate from isEOF to prevent any unwanted nastiness.
+  // Nerd fun: ' ' has a charCode of 32. Any characters below that are either tabs, line feeds, or something not that interesting. http://www.asciitable.com/
+  function isCtrlCharRaw(char) {
+    // A ctrl character has a charCode < 32 (below space)
+    var charCode = char.charCodeAt(0),
+        retVal = charCode < 32;
+
+    // Return the result
+    return retVal;
+  }
+
+  // Determine if a character is EOF or not
+  function isEOF(char) {
+    var retVal = char === EOF;
+    return retVal;
+  }
+
+  // Sugar control char checker
+  function isCtrlChar(char) {
+    var retVal = isCtrlCharRaw(char) || isEOF(char);
+    return retVal;
+  }
 
   /* getc(IC) -- return the next character. Watch out for lookahead. If the
   character is a control character, translate it to a space or
@@ -129,14 +150,13 @@ function jsmin(input, level, comment) {
     theLookahead = EOF;
 
     // If the memoized next character was EOF, update it to the current character and move to the next character
-    if(c == EOF) {
+    if(isEOF(c)) {
       c = input.charAt(iChar);
       ++iChar;
     }
 
-    // If the character is of human importance or is a linefeed, return it
-    // Nerd fun: ' ' has a charCode of 32. Any characters below that are either tabs, line feeds, or something not that interesting. http://www.asciitable.com/
-    if(c >= ' ' || c == '\n' || c == '\r') {
+    // If the character is of human importance (not a control character, or is line feed, or is a carraige return), return it
+    if(!isCtrlChar(c) || c == '\n' || c == '\r') {
       return c;
     }
 
