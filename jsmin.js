@@ -114,8 +114,9 @@ function jsmin(input, level, comment) {
   var iChar = 0,
       inputLen = input.length;
 
-  // getc is a helper function to determine the current character
-  function getc() {
+  // getcIC stands for get character for Important comment. An important comment is one with /*! */.
+  // It is possible for this to contain carriage returns and we require unaltered content since these could be licenses (main reason to use important comment).
+  function getcIC() {
     // Memoize the next character as c
     var c = theLookahead;
 
@@ -135,38 +136,26 @@ function jsmin(input, level, comment) {
 
     // If the character is of human importance or is a linefeed, return it
     // Nerd fun: ' ' has a charCode of 32. Any characters below that are either tabs, line feeds, or something not that interesting. http://www.asciitable.com/
-    if(c >= ' ' || c == '\n') {
+    if(c >= ' ' || c == '\n' || c == '\r') {
       return c;
-    }
-
-    // If the character is a carriage return, return it as a linefeed
-    if(c == '\r') {
-      return '\n';
     }
 
     // If we have not returned since then, return a space
     return ' ';
   }
-  // DEV: function getc() { var c = getcIC(); if (c == '\r') { c = '\n'; } return c; }
 
-  // getcIC is extremely similar to getc
-  function getcIC() {
-    var c = theLookahead;
-    if(iChar == inputLen) {
-      return EOF;
-    }
-    theLookahead = EOF;
-    if(c == EOF) {
-      c = input.charAt(iChar);
-      ++iChar;
+  // getc is akin to getcIC but downcasts carriage returns to line feeds to simplify minification
+  function getc() {
+    // Grab the c from getcIC
+    var c = getcIC();
+
+    // If the character is a carriage return, return it as a line feed
+    if(c == '\r') {
+      return '\n';
     }
 
-    // Except instead when the current character is a carriage return, we return a carriage return
-    if(c >= ' ' || c == '\n' || c == '\r') {
-      return c;
-    }
-
-    return ' ';
+    // If we have not returned since then, return a space
+    return c;
   }
 
 
