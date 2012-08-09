@@ -85,14 +85,13 @@ function jsmin(input, level, comment) {
 
   // Set up variables and constants
   var a = '',
-        b = '',
-        EOF = -1,
-        LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
-        DIGITS = '0123456789',
-        ALNUM = LETTERS + DIGITS + '_$\\',
-        theLookahead = EOF;
+      b = '',
+      EOF = -1,
+      LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
+      DIGITS = '0123456789',
+      ALNUM = LETTERS + DIGITS + '_$\\',
+      theLookahead = EOF;
   // DEV: EOF should be an object or unique reference
-
 
   /* isAlphanum -- return true if the character is a letter, digit, underscore,
   dollar sign, or non-ASCII character.
@@ -126,66 +125,69 @@ function jsmin(input, level, comment) {
     return retVal;
   }
 
-  /* getc(IC) -- return the next character. Watch out for lookahead. If the
-  character is a control character, translate it to a space or
-  linefeed.
-  */
+  var file = {
+    // Create an internal pointer and limit for the file
+    pointer: 0,
+    end: input.length,
+    /**
+     * Function that returns the next important character.
+     * @returns {String} Next character (length 1)
+     */
+    // If the character is a control character, it will be converted to a space or line feed.
+    // This function is explicity for important comments (i.e. /*! */)
+    // It is possible for this to contain carriage returns and we require unaltered content since these could be licenses (main reason to use important comment).
+    nextImportant: function nextImportant () {
+      // Localize the next character as char
+      var char = theLookahead,
+          pointer = file.pointer,
+          end = file.end;
 
-  // Create an index of the current character and memoize the length of the input
-  var iChar = 0,
-      inputLen = input.length;
+      // If we are at end of the file, return EOF
+      if(pointer === end) {
+        return EOF;
+      }
 
-  // getcIC stands for get character for Important comment. An important comment is one with /*! */.
-  // It is possible for this to contain carriage returns and we require unaltered content since these could be licenses (main reason to use important comment).
-  function getcIC() {
-    // Memoize the next character as c
-    var c = theLookahead;
+      // Reset the next character to EOF
+      // If you are wondering when theLookahead will never be EOF, it is set in `peek` to the next character
+      theLookahead = EOF;
 
-    // If we are at end of the input, return EOF
-    if(iChar == inputLen) {
-      return EOF;
+      // If the placeholder was junk (theLookahead held no data)
+      if(isEOF(char)) {
+        // Set the current character to our index 
+        char = input.charAt(charIndex);
+
+        // Increment the pointer
+        file.pointer += 1;
+      }
+
+      // If the character is not of human importance (is a control character besides line feed and carraige return), cast it to a space
+      if(isCtrlChar(char) && char != '\n' && char != '\r') {
+        char = ' ';
+      }
+
+      // Return our character
+      return char;
+    },
+    // getc is akin to getcIC but downcasts carriage returns to line feeds to simplify minification
+    function getc() {
+      // Grab the char from getcIC
+      var char = getcIC();
+
+      // If the character is a carriage return, cast it as a line feed
+      if(char === '\r') {
+        char = '\n';
+      }
+
+      // If we have not returned since then, return a space
+      return char;
     }
 
-    // Set the next character to EOF
-    theLookahead = EOF;
-
-    // If the memoized next character was EOF, update it to the current character and move to the next character
-    if(isEOF(c)) {
-      c = input.charAt(iChar);
-      ++iChar;
+    // Peek - Get the next character without getting it
+    function peek() {
+      theLookahead = getc();
+      return theLookahead;
     }
-
-    // If the character is of human importance (not a control character, or is line feed, or is a carraige return), return it
-    if(!isCtrlChar(c) || c == '\n' || c == '\r') {
-      return c;
-    }
-
-    // If we have not returned since then, return a space
-    return ' ';
-  }
-
-  // getc is akin to getcIC but downcasts carriage returns to line feeds to simplify minification
-  function getc() {
-    // Grab the c from getcIC
-    var c = getcIC();
-
-    // If the character is a carriage return, return it as a line feed
-    if(c == '\r') {
-      return '\n';
-    }
-
-    // If we have not returned since then, return a space
-    return c;
-  }
-
-
-  /* peek -- get the next character without getting it.
-  */
-  function peek() {
-    theLookahead = getc();
-    return theLookahead;
-  }
-
+  };
 
   /* next -- get the next character, excluding comments. peek() is used to see
   if a '/' is followed by a '/' or '*'.
