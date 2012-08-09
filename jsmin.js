@@ -190,6 +190,23 @@ function jsmin(input, level, comment) {
     }
   };
 
+  // Helper function to read from file until a character is hit
+  function readUntil(testFns, nextMethod) {
+    // Fallback nextMethod to next
+    nextMethod = nextMethod || 'next';
+
+    while (true) {
+      var char = file[nextMethod](),
+          i = testFns.length;
+
+      while (i--) {
+        if (testFns[i](char)) {
+          return char;
+        }
+      }
+    }
+  }
+
   /**
    * Function that gets the next character excluding non-important comments.
    * @returns {String} Next character (length 1)
@@ -199,31 +216,22 @@ function jsmin(input, level, comment) {
     var c = file.next();
 
     // If it is a slash (indicitvate of regexp, multi-line strings, or comments)
-    if(c == '/') {
+    if(c === '/') {
       // Read in the following character
       switch(file.peek()) {
         // If it is a slash, then this is a comment (i.e. // I am a comment )
         case '/':
-          // Loop while...
-          for(; ; ) {
-            c = file.next();
-
-            // If we hit a newline or EOF, return it
-            // Note: Nothing will happen in the case of a tab since file.next returns this as whitespace
-            if(c <= '\n') {
-              return c;
-            }
-          }
+          // Read until we hit a ctrlChar (line feed or EOF)
+          return readUntil([isCtrlChar]);
           break;
         case '*':
-          // If is an asterisk, then this is a multi-line comment (i.e. /* I am a multi-line comment */)
-          // JSMin is configured to automatically save important comment (i.e. ones with /*! at the start */)
-
+        // If it is an asterisk, then this is a multi-line comment (i.e. /* I am a multi-line comment */)
+        // JSMin is configured to automatically save important comment (i.e. ones with /*! at the start */)
           // Move the pointer onto the asterisk
           file.next();
 
           // If the following character is an exclamation point (i.e. we are working with an important comment)
-          if(file.peek() == '!') {
+          if(file.peek() === '!') {
             // Move the pointer onto the exclamation point
             file.next();
             
