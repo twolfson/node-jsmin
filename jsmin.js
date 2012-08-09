@@ -148,66 +148,71 @@ function jsmin(input, level, comment) {
       }
 
       // Reset the next character to EOF
-      // If you are wondering when theLookahead will never be EOF, it is set in `peek` to the next character
+      // If you are wondering when theLookahead will never be EOF, it is set in `file.peek` to the next character
       theLookahead = EOF;
 
       // If the placeholder was junk (theLookahead held no data)
       if(isEOF(char)) {
         // Set the current character to our index 
-        char = input.charAt(charIndex);
+        char = input.charAt(pointer);
 
         // Increment the pointer
         file.pointer += 1;
       }
 
       // If the character is not of human importance (is a control character besides line feed and carraige return), cast it to a space
-      if(isCtrlChar(char) && char != '\n' && char != '\r') {
+      if(isCtrlChar(char) && char !== '\n' && char !== '\r') {
         char = ' ';
       }
 
       // Return our character
       return char;
     },
-    // getc is akin to getcIC but downcasts carriage returns to line feeds to simplify minification
-    function getc() {
-      // Grab the char from getcIC
-      var char = getcIC();
+    /**
+     * Function that returns the next character. Same as nextImportant except carriage returns are line feeds
+     * @returns {String} Next character (length 1)
+     */
+    next: function next () {
+      // Grab the char from file.nextImportant
+      var char = this.nextImportant();
 
       // If the character is a carriage return, cast it as a line feed
       if(char === '\r') {
         char = '\n';
       }
 
-      // If we have not returned since then, return a space
+      // Return our character
       return char;
-    }
-
-    // Peek - Get the next character without getting it
-    function peek() {
-      theLookahead = getc();
+    },
+    /**
+     * Function that gets the next character without getting it
+     * @returns {String} Next character (length 1)
+     */
+    peek: function peek () {
+      theLookahead = this.next();
       return theLookahead;
     }
   };
 
-  /* next -- get the next character, excluding comments. peek() is used to see
+  /* next -- get the next character, excluding comments. file.peek() is used to see
   if a '/' is followed by a '/' or '*'.
   */
   function next() {
     // Get the next character
-    var c = getc();
+    var c = file.next();
 
     // If it is a slash (indicitvate of regexp, multi-line strings, or comments)
     if(c == '/') {
       // Read in the following character
-      switch(peek()) {
+      switch(file.peek()) {
         // If it is a slash, then this is a comment (i.e. // I am a comment )
         case '/':
           // Loop while...
           for(; ; ) {
-            c = getc();
+            c = file.next();
 
             // If we hit a newline or EOF, return it
-            // Note: Nothing will happen in the case of a tab since getc returns this as whitespace
+            // Note: Nothing will happen in the case of a tab since file.next returns this as whitespace
             if(c <= '\n') {
               return c;
             }
@@ -218,12 +223,12 @@ function jsmin(input, level, comment) {
           // JSMin is configured to automatically save important comment (i.e. ones with /*! at the start */)
 
           // Move the pointer onto the asterisk
-          getc();
+          file.next();
 
           // If the following character is an exclamation point (i.e. we are working with an important comment)
-          if(peek() == '!') {
+          if(file.peek() == '!') {
             // Move the pointer onto the exclamation point
-            getc();
+            file.next();
             
             // Set up a return comment to build on
             var d = '/*!';
@@ -231,15 +236,15 @@ function jsmin(input, level, comment) {
             // Loop infinitely
             for(; ; ) {
               // Get the next character
-              c = getcIC();
+              c = file.nextImportant();
 
               switch(c) {
                 // If it is an asterisk
                 case '*':
                   // and the character after that is a slash, then we are closing the comment
-                  if(peek() == '/') {
+                  if(file.peek() == '/') {
                     // Move the cursor onto the next slash
-                    getc();
+                    file.next();
 
                     // and return the final comment
                     return d + '*/';
@@ -261,12 +266,12 @@ function jsmin(input, level, comment) {
             // Loop infinitely
             for(; ; ) {
               // Grab the next character
-              switch(getc()) {
+              switch(file.next()) {
                 // If it is an asterisk and the following character is a slash
                 case '*':
-                  if(peek() == '/') {
+                  if(file.peek() == '/') {
                     // Then move the pointer to the slash and return padding
-                    getc();
+                    file.next();
                     return ' ';
                   }
                   break;
@@ -321,7 +326,7 @@ function jsmin(input, level, comment) {
           r.push(a);
 
           // Get the next character
-          a = getc();
+          a = file.next();
 
           // If the next character was our opening quote, stop looping
           if(a == b) {
@@ -336,7 +341,7 @@ function jsmin(input, level, comment) {
           // If there is a slash (multi-line separator), save it and skip to the next character
           if(a == '\\') {
             r.push(a);
-            a = getc();
+            a = file.next();
           }
         }
       }
@@ -356,7 +361,7 @@ function jsmin(input, level, comment) {
       // Loop infinitely
       for(; ; ) {
         // Get the next character
-        a = getc();
+        a = file.next();
 
         // If it closes the regexp, stop looping
         if(a == '/') {
@@ -367,7 +372,7 @@ function jsmin(input, level, comment) {
           r.push(a);
 
           // Retrieve the next character
-          a = getc();
+          a = file.next();
         } else if(a <= '\n') {
         // Otherwise, if it is a line break or EOF, throw an error
           throw 'Error: unterminated Regular Expression literal';
