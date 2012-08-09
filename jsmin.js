@@ -234,59 +234,54 @@ function jsmin(input, level, comment) {
   function next() {
     // Get the next character
     var startIndex = file.pointer,
-        c = file.next();
+        char = file.next();
 
     // If it is a slash (indicitvate of regexp, multi-line strings, or comments)
-    if(c === '/') {
+    if(char === '/') {
       // Read in the following character
-      switch(file.peek()) {
-        // If it is a slash, then this is a comment (i.e. // I am a comment )
-        case '/':
-          // Read until we hit a ctrlChar (line feed or EOF)
-          return readUntil([isCtrlChar]);
-          break;
-        case '*':
-        // If it is an asterisk, then this is a multi-line comment (i.e. /* I am a multi-line comment */)
-        // JSMin is configured to automatically save important comment (i.e. ones with /*! at the start */)
-          // Move the pointer onto the asterisk
+      var nextChar = file.peek();
+
+      // If the next char is a slash, then this is a single line comment (i.e. // I am a comment )
+      if (nextChar === '/') {
+        // Read until we hit a ctrlChar (line feed or EOF)
+        return readUntil([isCtrlChar]);
+      } else if (nextChar === '*') {
+      // Otherwise, if it is an asterisk, then this is a multi-line comment (i.e. /* I am a multi-line comment */)
+      // JSMin is configured to automatically save important comment (i.e. ones with /*! at the start */)
+        // Move the pointer onto the asterisk
+        file.next();
+
+        // If the following character is an exclamation point (i.e. we are working with an important comment)
+        if(file.peek() === '!') {
+          // Move the pointer onto the exclamation point
           file.next();
 
-          // If the following character is an exclamation point (i.e. we are working with an important comment)
-          if(file.peek() === '!') {
-            // Move the pointer onto the exclamation point
-            file.next();
+          // Read until we close the important comment
+          readUntil([atEndOfMultilineComment], 'nextImportant');
 
-            // Read until we close the important comment
-            readUntil([atEndOfMultilineComment], 'nextImportant');
+          // Return the important comment
+          var endIndex = file.pointer,
+              retVal = input.slice(startIndex, endIndex),
+              len = retVal.length,
+              lenMinus2 = len - 2;
 
-            // Return the important comment
-            var endIndex = file.pointer,
-                retVal = input.slice(startIndex, endIndex),
-                len = retVal.length,
-                lenMinus2 = len - 2;
+          // Remove non-head/tail asterisks as JSMin has done before
+          retVal = retVal.replace(/\*/g, function removeAsterisk (word, index) {
+            return (index === 1 || index === lenMinus2) ? '*' : '';
+          });
 
-            // Remove non-head/tail asterisks as JSMin has done before
-            retVal = retVal.replace(/\*/g, function removeAsterisk (word, index) {
-              return (index === 1 || index === lenMinus2) ? '*' : '';
-            });
+          // Return the retVal;
+          return retVal;
+        }
 
-            // Return the retVal;
-            return retVal;
-          } else {
-          // Otherwise, we are on an unimportant comment
-            // Read in the remainder of the multiline comment
-            readUntil([atEndOfMultilineComment]);
-            return ' ';
-          }
-          break;
-        default:
-        // Otherwise, return the current character (which is a slash)
-          return c;
+        // Otherwise, read in the remainder of the (unimportant) multiline comment
+        readUntil([atEndOfMultilineComment]);
+        return ' ';
       }
     }
 
     // Otherwise, return the current character
-    return c;
+    return char;
   }
 
 
