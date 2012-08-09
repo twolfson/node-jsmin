@@ -213,7 +213,8 @@ function jsmin(input, level, comment) {
    */
   function next() {
     // Get the next character
-    var c = file.next();
+    var startIndex = file.pointer,
+        c = file.next();
 
     // If it is a slash (indicitvate of regexp, multi-line strings, or comments)
     if(c === '/') {
@@ -234,50 +235,58 @@ function jsmin(input, level, comment) {
           if(file.peek() === '!') {
             // Move the pointer onto the exclamation point
             file.next();
-            
-            // Set up a return comment to build on
-            var d = '/*!';
 
-            // Loop infinitely
-            for(; ; ) {
-              // Get the next character
-              c = file.nextImportant();
-
-              switch(c) {
+            // Read until we close the important comment
+            readUntil([function readImportant (char) {
+              switch(char) {
                 // If it is an asterisk
                 case '*':
                   // and the character after that is a slash, then we are closing the comment
                   if(file.peek() == '/') {
-                    // Move the cursor onto the next slash
+                    // Move the cursor onto this slash
                     file.next();
 
                     // and return the final comment
-                    return d + '*/';
+                    return true;
                   }
                   break;
-
                 case EOF:
                 // Otherwise, if the next character is EOF, throw an error
                   throw 'Error: Unterminated comment.';
-
-                default:
-                // Otherwise, add on the character to our buffered comment
-                // Developer notes: Modern JS engines handle string concats much better than the array+push+join hack.
-                  d += c;
               }
-            }
+            }], 'nextImportant');
+
+            // Return the important comment
+            var endIndex = file.pointer,
+                retVal = input.slice(startIndex, endIndex),
+                len = retVal.length,
+                lenMinus2 = len - 2;
+
+            // Remove unnecessary asterisks as JSMin has done before
+            retVal = retVal.replace(/\*/g, function removeAsterisk (word, index) {
+              // If this is a head or tail asterisk, return it
+              if (index === 1 || index === lenMinus2) {
+                return '*';
+              } else {
+              // Otherwise, return nothing
+                return '';
+              }
+            });
+
+            // Return the retVal;
+            return retVal;
           } else {
           // Otherwise, we are on an unimportant comment
             // Loop infinitely
-            for(; ; ) {
+            readUntil([function readUnimportant (char) {
               // Grab the next character
-              switch(file.next()) {
+              switch(char) {
                 // If it is an asterisk and the following character is a slash
                 case '*':
-                  if(file.peek() == '/') {
+                  if(file.peek() === '/') {
                     // Then move the pointer to the slash and return padding
                     file.next();
-                    return ' ';
+                    return true;
                   }
                   break;
                 case EOF:
@@ -285,7 +294,8 @@ function jsmin(input, level, comment) {
                   throw 'Error: Unterminated comment.';
                 // Otherwise, do nothing
               }
-            }
+            }]);
+            return ' ';
           }
           break;
         default:
