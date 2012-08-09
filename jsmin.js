@@ -207,6 +207,26 @@ function jsmin(input, level, comment) {
     }
   }
 
+  function atEndOfMultilineComment(char) {
+    switch(char) {
+      // If it is an asterisk
+      case '*':
+        // and the character after that is a slash, then we are closing the comment
+        if(file.peek() == '/') {
+          // Move the cursor onto this slash
+          file.next();
+
+          // and return the final comment
+          return true;
+        }
+        break;
+      case EOF:
+      // Otherwise, if the next character is EOF, throw an error
+        throw 'Error: Unterminated comment.';
+    }
+  }
+
+
   /**
    * Function that gets the next character excluding non-important comments.
    * @returns {String} Next character (length 1)
@@ -237,24 +257,7 @@ function jsmin(input, level, comment) {
             file.next();
 
             // Read until we close the important comment
-            readUntil([function readImportant (char) {
-              switch(char) {
-                // If it is an asterisk
-                case '*':
-                  // and the character after that is a slash, then we are closing the comment
-                  if(file.peek() == '/') {
-                    // Move the cursor onto this slash
-                    file.next();
-
-                    // and return the final comment
-                    return true;
-                  }
-                  break;
-                case EOF:
-                // Otherwise, if the next character is EOF, throw an error
-                  throw 'Error: Unterminated comment.';
-              }
-            }], 'nextImportant');
+            readUntil([atEndOfMultilineComment], 'nextImportant');
 
             // Return the important comment
             var endIndex = file.pointer,
@@ -271,24 +274,8 @@ function jsmin(input, level, comment) {
             return retVal;
           } else {
           // Otherwise, we are on an unimportant comment
-            // Loop infinitely
-            readUntil([function readUnimportant (char) {
-              // Grab the next character
-              switch(char) {
-                // If it is an asterisk and the following character is a slash
-                case '*':
-                  if(file.peek() === '/') {
-                    // Then move the pointer to the slash and return padding
-                    file.next();
-                    return true;
-                  }
-                  break;
-                case EOF:
-                // Otherwise, if it is EOF, throw an error
-                  throw 'Error: Unterminated comment.';
-                // Otherwise, do nothing
-              }
-            }]);
+            // Read in the remainder of the multiline comment
+            readUntil([atEndOfMultilineComment]);
             return ' ';
           }
           break;
