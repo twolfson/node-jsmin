@@ -409,12 +409,9 @@ function jsmin(input, level, comment) {
   */
 
   // Minification function
-  function m() {
+  function minify() {
     // Create a buffered array to return
     var r = [];
-
-    // Reset a to an empty string
-    a = '';
 
     // Get the next character and delete it from the buffer
     r.push(nextB());
@@ -540,13 +537,13 @@ function jsmin(input, level, comment) {
   }
 
   // Process the input into its minified compliment
-  ret = m(input);
+  var retVal = minify(input);
 
   // If there is a comment, add it on
   if (comment) {
-    return comment + '\n' + ret;
+    retVal = comment + '\n' + retVal;
   }
 
   // Return the comment + minified code
-  return ret;
+  return retVal;
 }
