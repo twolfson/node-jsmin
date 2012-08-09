@@ -143,6 +143,7 @@ function jsmin(input, level, comment) {
     // If we have not returned since then, return a space
     return ' ';
   }
+  // DEV: function getc() { var c = getcIC(); if (c == '\r') { c = '\n'; } return c; }
 
   // getcIC is extremely similar to getc
   function getcIC() {
@@ -504,6 +505,7 @@ function jsmin(input, level, comment) {
       }
     }
 
+    // Join together the buffered output and return
     return r.join('');
   }
 
