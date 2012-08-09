@@ -84,9 +84,7 @@ function jsmin(input, level, comment) {
   if (!comment) comment = '';
 
   // Set up variables and constants
-  var a = '',
-      b = '',
-      EOF = -1,
+  var EOF = -1,
       LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
       DIGITS = '0123456789',
       ALNUM = LETTERS + DIGITS + '_$\\';
@@ -264,6 +262,7 @@ function jsmin(input, level, comment) {
               len = retVal.length,
               lenMinus2 = len - 2;
 
+          // TODO: This should be a 'legacy' option in JSMin?
           // Remove non-head/tail asterisks as JSMin has done before
           retVal = retVal.replace(/\*/g, function removeAsterisk (word, index) {
             return (index === 1 || index === lenMinus2) ? '*' : '';
@@ -291,52 +290,74 @@ function jsmin(input, level, comment) {
   action treats a string as a single character. Wow!
   action recognizes a regular expression if it is preceded by ( or , or =.
   */
+  var a = '',
+      b = '';
 
-  // Over-complicated action function
-  function action(d) {
-    // Create a return array
-    var r = [];
+  function action1() {
+    // Create a retArr for concatentating on
+    var retArr = [];
 
-    // If the action id is 1, add on the current a to the array
-    if(d == 1) {
-      r.push(a);
-    }
+    // Push on a to the the array
+    retArr.push(a);
 
-    // If the actiond id is 1 or 2
-    if(d < 3) {
-      // Load b into a
-      a = b;
+    action12Shared(retArr);
 
-      // If b was a single or double quote (i.e. opening a string)
-      // DEV: /['"]/.test(a)
-      if(a == '\'' || a == '"') {
-        // Loop infinitely
-        for(; ; ) {
-          // Push the current character to the array
+    // Return the retArr
+    return action123Shared(retArr);
+  }
+
+  function action2() {
+    // Create a retArr for concatentating on
+    var retArr = [];
+
+    // Call the shared function
+    action12Shared(retArr);
+
+    // Return the retArr
+    return action123Shared(retArr);
+  }
+
+  function action3() {
+    var retArr = [];
+
+    return action123Shared(retArr);
+  }
+
+  function action12Shared(r) {
+    // Load b into a
+    a = b;
+
+    // If b was a single or double quote (i.e. opening a string)
+    // DEV: /['"]/.test(a)
+    if(a == '\'' || a == '"') {
+      // Loop infinitely
+      for(; ; ) {
+        // Push the current character to the array
+        r.push(a);
+
+        // Get the next character
+        a = file.next();
+
+        // If the next character was our opening quote, stop looping
+        if(a == b) {
+          break;
+        }
+
+        // If line break or EOF is reached, throw an error
+        if(a <= '\n') {
+          throw 'Error: unterminated string literal: ' + a;
+        }
+
+        // If there is a slash (multi-line separator), save it and skip to the next character
+        if(a == '\\') {
           r.push(a);
-
-          // Get the next character
           a = file.next();
-
-          // If the next character was our opening quote, stop looping
-          if(a == b) {
-            break;
-          }
-
-          // If line break or EOF is reached, throw an error
-          if(a <= '\n') {
-            throw 'Error: unterminated string literal: ' + a;
-          }
-
-          // If there is a slash (multi-line separator), save it and skip to the next character
-          if(a == '\\') {
-            r.push(a);
-            a = file.next();
-          }
         }
       }
     }
+  }
 
+  function action123Shared(r) {
     // Get the next character (skipping over comments)
     b = next();
 
@@ -378,6 +399,21 @@ function jsmin(input, level, comment) {
 
     // Join together the buffer and return
     return r.join('');
+  }
+
+  // Over-complicated action function
+  function action(d) {
+    var retVal;
+
+    if (d === 1) {
+      retVal = action1();
+    } else if (d === 2) {
+      retVal = action2();
+    } else if (d === 3) {
+      retVal = action3();
+    }
+
+    return retVal;    
   }
 
 
