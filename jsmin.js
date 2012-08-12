@@ -369,29 +369,48 @@ function jsmin(input, level, comment) {
       // Add a then b onto the array
       retArr.push(a, b);
 
-      // Loop infinitely
-      for(; ; ) {
-        // Get the next character
-        a = file.next();
-
+      // Read until we close the regular expression
+      a = readUntil([function atEndOfRegExp (char) {
         // If it closes the regexp, stop looping
-        if(a == '/') {
-          break;
-        } else if(a == '\\') {
+        if(char == '/') {
+          return true;
+        } else if(char == '\\') {
         // Otherwise, if it is is a slash (escaping the next character)
           // Save it to the array
-          retArr.push(a);
+          retArr.push(char);
 
           // Retrieve the next character
-          a = file.next();
-        } else if(a <= '\n') {
+          char = file.next();
+        } else if(char <= '\n') {
         // Otherwise, if it is a line break or EOF, throw an error
           throw 'Error: unterminated Regular Expression literal';
         }
 
         // Save the character to our buffer
-        retArr.push(a);
-      }
+        retArr.push(char);
+      }]);
+      // for(; ; ) {
+      //   // Get the next character
+      //   a = file.next();
+
+        // // If it closes the regexp, stop looping
+        // if(a == '/') {
+        //   break;
+        // } else if(a == '\\') {
+        // // Otherwise, if it is is a slash (escaping the next character)
+        //   // Save it to the array
+        //   retArr.push(a);
+
+        //   // Retrieve the next character
+        //   a = file.next();
+        // } else if(a <= '\n') {
+        // // Otherwise, if it is a line break or EOF, throw an error
+        //   throw 'Error: unterminated Regular Expression literal';
+        // }
+
+        // Save the character to our buffer
+      //   retArr.push(a);
+      // }
 
       // Now that we are out of the regular expression, move off of the last slash
       b = next();
