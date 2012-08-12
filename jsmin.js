@@ -322,6 +322,27 @@ function jsmin(input, level, comment) {
   // DEV: a and b are characters (act like iterators as with file) so maybe objectify them
   // TODO: Add a note explaining how a <= b but they can sometimes have quite a lot of spacing between them
 
+  var output = {
+    'arr': [],
+    'val': function getOutputVal () {
+      // Grab the arr, add it together, and return
+      var arr = this.arr,
+          retVal = arr.join('');
+      return retVal;
+    },
+    'add': function addOutputChunk (start, end) {
+      // Grab the slice between start and end
+      var addStr = input.slice(start, end);
+
+      // Add it onto the array
+      this.arr.push(addStr);
+    },
+    // TODO: This should accept a pointer/index only
+    'addChar': function addOutputChar (char) {
+      this.arr.push(char);
+    }
+  };
+
   function outputAandMoveChars() {
     // Create a retArr for concatentating on
     var retArr = [];
@@ -379,8 +400,6 @@ function jsmin(input, level, comment) {
     // Get the next character (skipping over comments)
     b = next();
 
-    // console.log(a, b);
-
     // If it is a slash and looks like a regular expression
     // PERSONAL_TODO: Determine what 'a' is and why this works
     if(b == '/' && '(,=:[!&|'.has(a)) {
@@ -421,7 +440,7 @@ function jsmin(input, level, comment) {
     r.push(nextB());
 
     // While we are not at EOF
-    while(a != EOF) {
+    while(!isEOF(a)) {
       // Depending on the next character?
       // TODO: wtf is a?
       switch(a) {
