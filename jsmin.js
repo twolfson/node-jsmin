@@ -291,6 +291,9 @@ function jsmin(input, level, comment) {
 
           // TODO: This should be a 'legacy' option in JSMin?
           // Remove non-head/tail asterisks as JSMin has done before
+          // TODO: This is the one place where b is not a single character
+
+          // Should do a /\*/g.exec, output.add(lastIndex, end) where our startIndex is just that
           retVal = retVal.replace(/\*/g, function removeAsterisk (word, index) {
             return (index === 1 || index === lenMinus2) ? '*' : '';
           });
@@ -339,6 +342,8 @@ function jsmin(input, level, comment) {
     },
     // TODO: This should accept a pointer/index only
     'addChar': function addOutputChar (char) {
+      // // TODO: Deal with important comments =/
+      // if (char.length > 1) { console.log(char); }
       this.arr.push(char);
     }
   };
@@ -379,8 +384,7 @@ function jsmin(input, level, comment) {
       a = readUntil([atEndOfString(b)]);
 
       // Get the end index and retStr
-      var endIndex = file.pointer - 1,
-          retStr = input.slice(startIndex, endIndex);
+      var endIndex = file.pointer - 1;
 
       // Add the retStr to our output
       output.add(startIndex, endIndex);
@@ -404,8 +408,7 @@ function jsmin(input, level, comment) {
       a = readUntil([atEndOfRegExp]);
 
       // Get the end index and retStr
-      var endIndex = file.pointer - 1,
-          retStr = input.slice(startIndex, endIndex);
+      var endIndex = file.pointer - 1;
 
       // Add the retStr to the output
       output.add(startIndex, endIndex);
