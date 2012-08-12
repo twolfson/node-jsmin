@@ -480,60 +480,47 @@ function jsmin(input, level, comment) {
         }
       } else {
       // Otherwise (a is not whitespace or a line feed)
-        switch(b) {
-          // If b is whitespace
-          case ' ':
-            // If a is alphanumeric, output it, swap b to a, get the next b and break out
-            if(isAlphanum(a)) {
-              outputAandMoveChars();
-              break;
-            }
-            // DEV: Use an else statement
+        // If b is whitespace
+        if (b === ' ') {
+          // If a is alphanumeric, output it, swap b to a, get the next b and break out
+          if(isAlphanum(a)) {
+            outputAandMoveChars();
+          } else {
             // Otherwise, get the next b
             nextB();
-            break;
-          case '\n':
-          // If b is a line feed
-            // If we are on the weak minification and a is not a line feed as well (not possible due to previous switch?)
-            // Then, output a, copy b to a, get the next b
-            if(level == 1 && a != '\n') {
-              outputAandMoveChars();
+          }
+        } else if (b === '\n') {
+        // If b is a line feed
+          // If we are on the weak minification and a is not a line feed as well (not possible due to previous switch?)
+          // Then, output a, copy b to a, get the next b
+          if(level == 1 && a != '\n') {
+            outputAandMoveChars();
+          } else {
+          // Otherwise
+            // If we are closing an object or quotes before this
+            // TODO: Right? since a is before a? (so tired and confused)
+            if ('}])+-"\''.has(a)) {
+              // If we are doing aggressive minification, ignore current a and b. Get the next b.
+              if(level == 3) {
+                nextB();
+              } else {
+              // Otherwise, output a, copy b to a, get the next b
+                outputAandMoveChars();
+              }
             } else {
             // Otherwise
-              switch(a) {
-                // If we are closing an object or quotes before this
-                // TODO: Right? since a is before a? (so tired and confused)
-                case '}':
-                case ']':
-                case ')':
-                case '+':
-                case '-':
-                case '"':
-                case '\'':
-                  // If we are doing aggressive minification, ignore current a and b. Get the next b.
-                  if(level == 3) {
-                    nextB();
-                  } else {
-                  // Otherwise, output a, copy b to a, get the next b
-                    outputAandMoveChars();
-                  }
-                  break;
-                default:
-                // Otherwise
-                  // If a is alphanumeric, output a, copy b to a, get the next b
-                  if(isAlphanum(a)) {
-                    outputAandMoveChars();
-                  } else {
-                  // Otherwise, get the next b
-                    nextB();
-                  }
+              // If a is alphanumeric, output a, copy b to a, get the next b
+              if(isAlphanum(a)) {
+                outputAandMoveChars();
+              } else {
+              // Otherwise, get the next b
+                nextB();
               }
             }
-            break;
-          default:
-          // Otherwise (b is not whitespace or a linefeed), output a, copy b to a, get the next b
-            outputAandMoveChars();
-            break;
+          }
+        } else {
+        // Otherwise (b is not whitespace or a linefeed), output a, copy b to a, get the next b
+          outputAandMoveChars();
         }
       }
     }
