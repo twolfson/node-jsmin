@@ -72,6 +72,9 @@ exports.jsmin = jsmin;
  * @returns {String} Minified code
  */
 function jsmin(input, level, comment) {
+  // TODO: Create an output object which has an 'add' function
+  // This takes a start and end index to add to the output
+  // There should also be a 'addChar' function which adds the character at a certain index (could optimize with charAt)
 
   // If no input is provided, return an empty string
   // DEV: Move level, comment into options object
@@ -225,17 +228,36 @@ function jsmin(input, level, comment) {
   }
 
   function atEndOfRegExp(char) {
-      // If the character is a slash (closes the regexp), stop looping
-      if(char === '/') {
-        return true;
-      } else if(char === '\\') {
-      // Otherwise, if it is is a slash (escaping the next character), skip it
-        file.next();
-      } else if(isCtrlChar(char)) {
-      // Otherwise, if it is a line break or EOF, throw an error
-        throw 'Error: unterminated Regular Expression literal';
-      }
+    // If the character is a slash (closes the regexp), stop looping
+    if(char === '/') {
+      return true;
+    } else if(char === '\\') {
+    // Otherwise, if it is is a slash (escaping the next character), skip it
+      file.next();
+    } else if(isCtrlChar(char)) {
+    // Otherwise, if it is a line break or EOF, throw an error
+      throw 'Error: unterminated Regular Expression literal';
     }
+  }
+
+  // TODO: While jQuery does do this, I am worried about when char == '\\'
+  function atEndOfString(char) {
+    // If the next character was our opening quote, stop looping
+    // TODO: Move off of b
+    if(char === b) {
+      return true;
+    }
+
+    // If line break or EOF is reached, throw an error
+    if(isCtrlChar(char)) {
+      throw 'Error: unterminated string literal: ' + char;
+    }
+
+    // If there is a slash (multi-line separator), skip to the next character
+    if(char == '\\') {
+      file.next();
+    }
+  }
 
   /**
    * Function that gets the next character excluding non-important comments.
@@ -347,24 +369,8 @@ function jsmin(input, level, comment) {
       retArr.push(a);
 
       // Read until we close the string
-      // TODO: While jQuery does do this, I am worried about when char == '\\'
       var startIndex = file.pointer;
-      a = readUntil([function atEndOfString(char) {
-        // If the next character was our opening quote, stop looping
-        if(char === b) {
-          return true;
-        }
-
-        // If line break or EOF is reached, throw an error
-        if(isCtrlChar(char)) {
-          throw 'Error: unterminated string literal: ' + char;
-        }
-
-        // If there is a slash (multi-line separator), skip to the next character
-        if(char == '\\') {
-          file.next();
-        }
-      }]);
+      a = readUntil([atEndOfString]);
 
       // Get the end index and retStr
       var endIndex = file.pointer - 1,
