@@ -3,12 +3,12 @@
 ** on Franck Marica's jsmin.js by Peteris Krumins.
 */
 
-/*! 
+/*!
 jsmin.js - 2010-01-15
 Author: NanaLich (http://www.cnblogs.com/NanaLich)
-Another patched version for jsmin.js patched by Billy Hoffman, 
+Another patched version for jsmin.js patched by Billy Hoffman,
 this version will try to keep CR LF pairs inside the important comments
-away from being changed into double LF pairs. 
+away from being changed into double LF pairs.
 
 jsmin.js - 2009-11-05
 Author: Billy Hoffman
@@ -142,7 +142,7 @@ function jsmin(input, level, comment) {
         return EOF;
       }
 
-      // Set the current character to our index 
+      // Set the current character to our index
       char = input.charAt(pointer);
 
       // Increment the pointer
@@ -292,6 +292,8 @@ function jsmin(input, level, comment) {
   */
   var a = '',
       b = '';
+  // DEV: a and b are characters (act like iterators as with file) so maybe objectify them
+  // TODO: Add a note explaining how a <= b but they can sometimes have quite a lot of spacing between them
 
   function outputAandMoveChars() {
     // Create a retArr for concatentating on
@@ -365,9 +367,7 @@ function jsmin(input, level, comment) {
     // PERSONAL_TODO: Determine what 'a' is and why this works
     if(b == '/' && '(,=:[!&|'.has(a)) {
       // Add a then b onto the array
-      // DEV: r.push(a, b);
-      retArr.push(a);
-      retArr.push(b);
+      retArr.push(a, b);
 
       // Loop infinitely
       for(; ; ) {
