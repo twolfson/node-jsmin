@@ -224,6 +224,23 @@ function jsmin(input, level, comment) {
     }
   }
 
+  function atEndOfRegExp(char) {
+      // If it closes the regexp, stop looping
+      // TODO: move to ===
+      if(char == '/') {
+        return true;
+      } else if(char == '\\') {
+      // Otherwise, if it is is a slash (escaping the next character)
+        // Retrieve the next character
+        // TODO: How can we do file.next without doing file.next()
+        // TODO: Remove char = after commit
+        char = file.next();
+      } else if(isCtrlChar(char)) {
+      // Otherwise, if it is a line break or EOF, throw an error
+        throw 'Error: unterminated Regular Expression literal';
+      }
+    }
+
 
   /**
    * Function that gets the next character excluding non-important comments.
@@ -371,19 +388,7 @@ function jsmin(input, level, comment) {
 
       // Read until we close the regular expression
       var startIndex = file.pointer;
-      a = readUntil([function atEndOfRegExp (char) {
-        // If it closes the regexp, stop looping
-        if(char == '/') {
-          return true;
-        } else if(char == '\\') {
-        // Otherwise, if it is is a slash (escaping the next character)
-          // Retrieve the next character
-          char = file.next();
-        } else if(isCtrlChar(char)) {
-        // Otherwise, if it is a line break or EOF, throw an error
-          throw 'Error: unterminated Regular Expression literal';
-        }
-      }]);
+      a = readUntil([atEndOfRegExp]);
 
       // Get the end index and retStr
       var endIndex = file.pointer - 1,
