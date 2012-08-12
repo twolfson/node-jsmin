@@ -475,7 +475,7 @@ function jsmin(input, level, comment) {
 
         var sublogic = '}])+-"\''.has(a) && level === 3 || !'}])+-"\''.has(a) && !isAlphanum(a);
 
-        echoA = echoA && !(b === '\n' && level !== 1 && sublogic);
+        echoA = echoA && (b !== '\n' || !(level !== 1 && sublogic));
 
         // TODO: Is there ever a time when we are here and a === '\n'? -- No since else if (a === '\n') covers that...
 
