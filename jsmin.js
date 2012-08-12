@@ -347,6 +347,8 @@ function jsmin(input, level, comment) {
       retArr.push(a);
 
       // Read until we close the string
+      // TODO: While jQuery does do this, I am worried about when char == '\\'
+      var startIndex = file.pointer;
       a = readUntil([function atEndOfString(char) {
         // If the next character was our opening quote, stop looping
         if(char === b) {
@@ -358,15 +360,18 @@ function jsmin(input, level, comment) {
           throw 'Error: unterminated string literal: ' + char;
         }
 
-        // If there is a slash (multi-line separator), save it and skip to the next character
+        // If there is a slash (multi-line separator), skip to the next character
         if(char == '\\') {
-          retArr.push(char);
-          char = file.next();
+          file.next();
         }
-
-        // Push the current character to the array
-        retArr.push(char);
       }]);
+
+      // Get the end index and retStr
+      var endIndex = file.pointer - 1,
+          retStr = input.slice(startIndex, endIndex);
+
+      // Add the retStr to our retArr
+      retArr.push(retStr);
     }
   }
 
