@@ -225,22 +225,18 @@ function jsmin(input, level, comment) {
   }
 
   function atEndOfRegExp(char) {
-      // If it closes the regexp, stop looping
-      // TODO: move to ===
-      if(char == '/') {
+      // If the character is a slash (closes the regexp), stop looping
+      if(char === '/') {
         return true;
-      } else if(char == '\\') {
-      // Otherwise, if it is is a slash (escaping the next character)
-        // Retrieve the next character
+      } else if(char === '\\') {
+      // Otherwise, if it is is a slash (escaping the next character), skip it
         // TODO: How can we do file.next without doing file.next()
-        // TODO: Remove char = after commit
-        char = file.next();
+        file.next();
       } else if(isCtrlChar(char)) {
       // Otherwise, if it is a line break or EOF, throw an error
         throw 'Error: unterminated Regular Expression literal';
       }
     }
-
 
   /**
    * Function that gets the next character excluding non-important comments.
