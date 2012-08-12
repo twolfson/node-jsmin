@@ -344,44 +344,33 @@ function jsmin(input, level, comment) {
   };
 
   function outputAandMoveChars() {
-    // Create a retArr for concatentating on
-    var retArr = [];
-
     // Push on a to the the array
-    retArr.push(a);
     output.addChar(a);
 
-    _copyBtoA(retArr);
+    // Copy b to a
+    _copyBtoA();
 
-    // Return the retArr
-    return _getNextB(retArr);
+    // Get the next b
+    _getNextB();
   }
 
   function moveChars() {
-    // Create a retArr for concatentating on
-    var retArr = [];
+    // Copy b to a
+    _copyBtoA();
 
-    // Call the shared function
-    _copyBtoA(retArr);
-
-    // Return the retArr
-    return _getNextB(retArr);
+    // Get the next b
+    _getNextB();
   }
 
-  function nextB() {
-    var retArr = [];
+  var nextB = _getNextB;
 
-    return _getNextB(retArr);
-  }
-
-  function _copyBtoA(retArr) {
+  function _copyBtoA() {
     // Load b into a
     a = b;
 
     // If b was a single or double quote (i.e. opening a string)
     if(/'|"/.test(b)) {
       // Push the current character to the array
-      retArr.push(a);
       output.addChar(a);
 
       // Read until we close the string
@@ -393,13 +382,12 @@ function jsmin(input, level, comment) {
       var endIndex = file.pointer - 1,
           retStr = input.slice(startIndex, endIndex);
 
-      // Add the retStr to our retArr
-      retArr.push(retStr);
+      // Add the retStr to our output
       output.add(startIndex, endIndex);
     }
   }
 
-  function _getNextB(retArr) {
+  function _getNextB() {
     // Get the next character (skipping over comments)
     b = next();
 
@@ -407,8 +395,7 @@ function jsmin(input, level, comment) {
     // PERSONAL_TODO: Determine what 'a' is and why this works
     // TODO: See if this can be combined with functionality from _copyBtoA (I don't think so)
     if(b == '/' && '(,=:[!&|'.has(a)) {
-      // Add a then b onto the array
-      retArr.push(a, b);
+      // Add a then b onto the output
       output.addChar(a);
       output.addChar(b);
 
@@ -420,16 +407,12 @@ function jsmin(input, level, comment) {
       var endIndex = file.pointer - 1,
           retStr = input.slice(startIndex, endIndex);
 
-      // Add the retStr to our retArr
-      retArr.push(retStr);
+      // Add the retStr to the output
       output.add(startIndex, endIndex);
 
       // Now that we are out of the regular expression, move off of the last slash
       b = next();
     }
-
-    // Join together the buffer and return
-    return retArr.join('');
   }
 
   /* m -- Copy the input to the output, deleting the characters which are
@@ -440,11 +423,8 @@ function jsmin(input, level, comment) {
   */
   // Minification function
   function minify() {
-    // Create a buffered array to return
-    var r = [];
-
     // Get the next character and delete it from the buffer
-    r.push(nextB());
+    nextB();
 
     // While we are not at EOF
     while(!isEOF(a)) {
@@ -456,10 +436,10 @@ function jsmin(input, level, comment) {
           // If b is alphanumeric, output a, copy b to a, get b
           // TODO: I am officially confused.
           if(isAlphanum(b)) {
-            r.push(outputAandMoveChars());
+            outputAandMoveChars();
           } else {
           // Otherwise, copy b to a, get b (skipping output of a)
-            r.push(moveChars());
+            moveChars();
           }
           break;
         case '\n':
@@ -472,26 +452,26 @@ function jsmin(input, level, comment) {
             case '(':
             case '+':
             case '-':
-              r.push(outputAandMoveChars());
+              outputAandMoveChars();
               break;
             case ' ':
             // Otherwise, if it is whitespace, move to the next b
-              r.push(nextB());
+              nextB();
               break;
             default:
             // Otherwise
               // If b is alphanumeric, output a, copy b to a, get the next b
               // TODO: huh?
               if(isAlphanum(b)) {
-                r.push(outputAandMoveChars());
+                outputAandMoveChars();
               } else {
               // Otherwise, if we are on the weakest minification and b is not a linebreak, output a
                 // In both cases, copy b to a and get the next b
                 // TODO: huh on a/b copying
                 if(level == 1 && b != '\n') {
-                  r.push(outputAandMoveChars());
+                  outputAandMoveChars();
                 } else {
-                  r.push(moveChars());
+                  moveChars();
                 }
               }
           }
@@ -504,12 +484,12 @@ function jsmin(input, level, comment) {
               // If a is alphanumeric, output it, swap b to a, get the next b and break out
               // TODO: huh a/b?
               if(isAlphanum(a)) {
-                r.push(outputAandMoveChars());
+                outputAandMoveChars();
                 break;
               }
               // DEV: Use an else statement
               // Otherwise, get the next b
-              r.push(nextB());
+              nextB();
               break;
             case '\n':
             // If b is a line feed
@@ -517,7 +497,7 @@ function jsmin(input, level, comment) {
               // Then, output a, copy b to a, get the next b
               // TODO: huh a/b?
               if(level == 1 && a != '\n') {
-                r.push(outputAandMoveChars());
+                outputAandMoveChars();
               } else {
               // Otherwise
                 switch(a) {
@@ -533,11 +513,11 @@ function jsmin(input, level, comment) {
                     // If we are doing aggressive minification, ignore current a and b. Get the next b.
                     // TODO: huh? a/b?
                     if(level == 3) {
-                      r.push(nextB());
+                      nextB();
                     } else {
                     // Otherwise, output a, copy b to a, get the next b
                     // TODO: huh? a/b?
-                      r.push(outputAandMoveChars());
+                      outputAandMoveChars();
                     }
                     break;
                   default:
@@ -545,10 +525,10 @@ function jsmin(input, level, comment) {
                     // If a is alphanumeric, output a, copy b to a, get the next b
                     // TODO: huh?
                     if(isAlphanum(a)) {
-                      r.push(outputAandMoveChars());
+                      outputAandMoveChars();
                     } else {
                     // Otherwise, get the next b
-                      r.push(nextB());
+                      nextB();
                     }
                 }
               }
@@ -556,14 +536,14 @@ function jsmin(input, level, comment) {
             default:
             // Othrwise (b is not whitespace or a linefeed), output a, copy b to a, get the next b
             // TODO: huh?
-              r.push(outputAandMoveChars());
+              outputAandMoveChars();
               break;
           }
       }
     }
 
     // Join together the buffered output and return
-    return r.join('');
+    return output.val();
   }
 
   // Process the input into its minified compliment
@@ -575,5 +555,5 @@ function jsmin(input, level, comment) {
   }
 
   // Return the comment + minified code
-  return output.val();
+  return retVal;
 }
