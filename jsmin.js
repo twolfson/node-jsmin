@@ -57,6 +57,7 @@ missing semicolons (can be regressive)
 */
 
 // Helper function to determine if a string contains a character or not
+// TODO: Move off of has and onto file pointer .isA
 String.prototype.has = function(c) {
   return this.indexOf(c) > -1;
 };
@@ -363,27 +364,24 @@ function jsmin(input, level, comment) {
   };
 
   function outputAandMoveChars() {
-    // Push on a to the the array
+    outputA();
+    moveChars();
+  }
+
+  function outputA() {
+    // Push on a to the the output
     output.addChar(a);
-
-    // Copy b to a
-    _copyBtoA();
-
-    // Get the next b
-    _getNextB();
   }
 
   function moveChars() {
     // Copy b to a
-    _copyBtoA();
+    copyBtoA();
 
     // Get the next b
-    _getNextB();
+    getNextB();
   }
 
-  var nextB = _getNextB;
-
-  function _copyBtoA() {
+  function copyBtoA() {
     // Load b into a
     a = b;
 
@@ -405,7 +403,7 @@ function jsmin(input, level, comment) {
     }
   }
 
-  function _getNextB() {
+  function getNextB() {
     // Get the next character (skipping over comments)
     b = next();
 
@@ -441,7 +439,7 @@ function jsmin(input, level, comment) {
   // Minification function
   function minify() {
     // Get the next character and delete it from the buffer
-    nextB();
+    getNextB();
 
     // While we are not at EOF
     while(!isEOF(a)) {
@@ -462,7 +460,7 @@ function jsmin(input, level, comment) {
           outputAandMoveChars();
         } else if (b === ' ') {
         // Otherwise, if it is whitespace, move to the next b
-          nextB();
+          getNextB();
         } else {
         // Otherwise
           // If b is alphanumeric, output a, copy b to a, get the next b
@@ -487,7 +485,7 @@ function jsmin(input, level, comment) {
             outputAandMoveChars();
           } else {
             // Otherwise, get the next b
-            nextB();
+            getNextB();
           }
         } else if (b === '\n') {
         // If b is a line feed
@@ -502,7 +500,7 @@ function jsmin(input, level, comment) {
             if ('}])+-"\''.has(a)) {
               // If we are doing aggressive minification, ignore current a and b. Get the next b.
               if(level == 3) {
-                nextB();
+                getNextB();
               } else {
               // Otherwise, output a, copy b to a, get the next b
                 outputAandMoveChars();
@@ -514,7 +512,7 @@ function jsmin(input, level, comment) {
                 outputAandMoveChars();
               } else {
               // Otherwise, get the next b
-                nextB();
+                getNextB();
               }
             }
           }
