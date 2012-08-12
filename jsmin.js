@@ -230,7 +230,6 @@ function jsmin(input, level, comment) {
         return true;
       } else if(char === '\\') {
       // Otherwise, if it is is a slash (escaping the next character), skip it
-        // TODO: How can we do file.next without doing file.next()
         file.next();
       } else if(isCtrlChar(char)) {
       // Otherwise, if it is a line break or EOF, throw an error
@@ -343,38 +342,39 @@ function jsmin(input, level, comment) {
     a = b;
 
     // If b was a single or double quote (i.e. opening a string)
-    // DEV: /['"]/.test(a)
-    if(a == '\'' || a == '"') {
-      // Loop infinitely
-      for(; ; ) {
-        // Push the current character to the array
-        retArr.push(a);
+    if(/'|"/.test(b)) {
+      // Push the current character to the array
+      retArr.push(a);
 
-        // Get the next character
-        a = file.next();
-
+      // Read until we close the string
+      a = readUntil([function atEndOfString(char) {
         // If the next character was our opening quote, stop looping
-        if(a == b) {
-          break;
+        if(char === b) {
+          return true;
         }
 
         // If line break or EOF is reached, throw an error
-        if(a <= '\n') {
-          throw 'Error: unterminated string literal: ' + a;
+        if(isCtrlChar(char)) {
+          throw 'Error: unterminated string literal: ' + char;
         }
 
         // If there is a slash (multi-line separator), save it and skip to the next character
-        if(a == '\\') {
-          retArr.push(a);
-          a = file.next();
+        if(char == '\\') {
+          retArr.push(char);
+          char = file.next();
         }
-      }
+
+        // Push the current character to the array
+        retArr.push(char);
+      }]);
     }
   }
 
   function _getNextB(retArr) {
     // Get the next character (skipping over comments)
     b = next();
+
+    // console.log(a, b);
 
     // If it is a slash and looks like a regular expression
     // PERSONAL_TODO: Determine what 'a' is and why this works
