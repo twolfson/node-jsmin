@@ -455,12 +455,13 @@ function jsmin(input, level, comment) {
         moveChars();
       } else if (a === '\n') {
       // Otherwise, if a is a line feed, then
-        // If b is more whitespace, move to the next b
+        // If `b` is more whitespace, move to the next `b`
+        // Explanation: If we have `\n   z`, we want to capture all of that whitespace and convert it to `\nz`
         if (b === ' ') {
           getNextB();
-        } else if ('{[(+-'.has(b) || isAlphanum(b) || (level == 1 && b !== '\n')) {
-        // If b is starting some scoping or doing a unary operation, then output a (line break), copy b to a, get b
-        // TODO: huh?
+        } else if ('{[(+-'.has(b) || isAlphanum(b) || (level === 1 && b !== '\n')) {
+        // Otherwise, if `b` is an script character (or we are on level 1 and want to preserve anything), then output `a` (line break) and move the characters
+        // TODO: Explanation: Not too sure on this one... might be when inside of a JSON object with multiple line breaks
           outputAandMoveChars();
         } else {
         // Otherwise, copy b to a and get the next b
@@ -486,10 +487,9 @@ function jsmin(input, level, comment) {
           } else {
           // Otherwise
             // If we are closing an object or quotes before this
-            // TODO: Right? since a is before a? (so tired and confused)
             if ('}])+-"\''.has(a)) {
               // If we are doing aggressive minification, ignore current a and b. Get the next b.
-              if(level == 3) {
+              if(level === 3) {
                 getNextB();
               } else {
               // Otherwise, output a, copy b to a, get the next b
