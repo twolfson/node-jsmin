@@ -97,6 +97,7 @@ function jsmin(input, level, comment) {
   dollar sign, or non-ASCII character.
   */
 
+  //TODO: Move isAlpha, Ctrl, EOF, functions onto file pointer
   function isAlphanum(c) {
     return !isEOF(c) && (ALNUM.has(c) || c.charCodeAt(0) > 126);
   }
@@ -125,10 +126,13 @@ function jsmin(input, level, comment) {
     return retVal;
   }
 
-  var file = {
+  function Pointer(input) {
     // Create an internal pointer and limit for the file
-    pointer: 0,
-    end: input.length,
+    this.pointer = 0;
+    this.input = input;
+    this.end = input.length;
+  }
+  Pointer.prototype = {
     /**
      * Function that returns the next important character.
      * @returns {String} Next character (length 1)
@@ -137,8 +141,8 @@ function jsmin(input, level, comment) {
     // This function is explicity for important comments (i.e. /*! */)
     // It is possible for this to contain carriage returns and we require unaltered content since these could be licenses (main reason to use important comment).
     nextImportant: function nextImportant () {
-      var pointer = file.pointer,
-          end = file.end;
+      var pointer = this.pointer,
+          end = this.end;
 
       // If we are at end of the file, return EOF
       if(pointer === end) {
@@ -146,10 +150,10 @@ function jsmin(input, level, comment) {
       }
 
       // Set the current character to our index
-      char = input.charAt(pointer);
+      char = this.input.charAt(pointer);
 
       // Increment the pointer
-      file.pointer += 1;
+      this.pointer += 1;
 
       // If the character is not of human importance (is a control character besides line feed and carraige return), cast it to a space
       if(isCtrlChar(char) && char !== '\n' && char !== '\r') {
@@ -188,8 +192,18 @@ function jsmin(input, level, comment) {
 
       // Return the next character
       return nextChar;
+    },
+    /**
+     * Move to another pointers location
+     * @param {Object<Pointer>} pointer
+     */
+    moveTo: function moveTo (pointer) {
+      // Copy over the index
+      this.index = pointer.index;
     }
   };
+
+  var file = new Pointer(input);
 
   // Helper function to read from file until a character is hit
   function readUntil(testFns, nextMethod) {
