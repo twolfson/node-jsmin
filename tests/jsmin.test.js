@@ -15,6 +15,7 @@ var assert = require('assert'),
 // fs.writeFileSync('./test_files/jquery.min.3.js', jsmin.jsmin(jquerySrc, 3), 'utf8');
 
 // Run our asserts
+fs.writeFileSync(__dirname + '/jsmin.debug.js', actualJQueryMin1, 'utf8');
 assert.strictEqual(expectedJQueryMin1, actualJQueryMin1, 'JS min level 1');
 assert.strictEqual(expectedJQueryMin2, actualJQueryMin2, 'JS min level 2');
 assert.strictEqual(expectedJQueryMin3, actualJQueryMin3, 'JS min level 3');
