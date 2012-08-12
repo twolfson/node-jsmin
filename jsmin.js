@@ -331,12 +331,18 @@ function jsmin(input, level, comment) {
             lastIndex = index;
           }
 
+          var testVal = "";
+
           chunks.forEach(function (chunk) {
-            console.log(input.slice(chunk[0], chunk[1]));
+            // console.log(input.slice(chunk[0], chunk[1]));
+            // output.add(chunk[0], chunk[1] - 1);
+            testVal += input.slice(chunk[0], chunk[1] - 1);
           });
 
+          testVal += input.slice(lastIndex, endIndex);
+
           // The final chunk will be handled by 'b'?
-          console.log(input.slice(endMinus2, endIndex));
+          // console.log(input.slice(endMinus2, endIndex));
 
           // TODO: This should be a 'legacy' option in JSMin?
           // Remove non-head/tail asterisks as JSMin has done before
@@ -347,10 +353,13 @@ function jsmin(input, level, comment) {
             return (index === 1 || index === lenMinus2) ? '*' : '';
           });
 
+          console.log(testVal === retVal);
+
           // output.addChar(retVal);
 
           // Return the retVal
-          return retVal;
+          // return input.slice(lastIndex, endIndex);
+          return testVal;
           // return '';
         }
 
