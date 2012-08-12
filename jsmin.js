@@ -456,36 +456,27 @@ function jsmin(input, level, comment) {
         }
       } else if (a === '\n') {
       // Otherwise, if a is a line feed, then
-        switch(b) {
-          // If a is starting some scoping or doing a unary operation, then output a (line break), copy b to a, get b
-          // TODO: huh?
-          case '{':
-          case '[':
-          case '(':
-          case '+':
-          case '-':
+        // If b is starting some scoping or doing a unary operation, then output a (line break), copy b to a, get b
+        // TODO: huh?
+        if ('{[(+-'.has(b)) {
+          outputAandMoveChars();
+        } else if (b === ' ') {
+        // Otherwise, if it is whitespace, move to the next b
+          nextB();
+        } else {
+        // Otherwise
+          // If b is alphanumeric, output a, copy b to a, get the next b
+          if(isAlphanum(b)) {
             outputAandMoveChars();
-            break;
-          case ' ':
-          // Otherwise, if it is whitespace, move to the next b
-            nextB();
-            break;
-          default:
-          // Otherwise
-            // If b is alphanumeric, output a, copy b to a, get the next b
-            // TODO: huh?
-            if(isAlphanum(b)) {
+          } else {
+          // Otherwise, if we are on the weakest minification and b is not a linebreak, output a
+            // In both cases, copy b to a and get the next b
+            if(level == 1 && b != '\n') {
               outputAandMoveChars();
             } else {
-            // Otherwise, if we are on the weakest minification and b is not a linebreak, output a
-              // In both cases, copy b to a and get the next b
-              // TODO: huh on a/b copying
-              if(level == 1 && b != '\n') {
-                outputAandMoveChars();
-              } else {
-                moveChars();
-              }
+              moveChars();
             }
+          }
         }
       } else {
       // Otherwise (a is not whitespace or a line feed)
