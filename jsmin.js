@@ -241,22 +241,23 @@ function jsmin(input, level, comment) {
   }
 
   // TODO: While jQuery does do this, I am worried about when char == '\\'
-  function atEndOfString(char) {
-    // If the next character was our opening quote, stop looping
-    // TODO: Move off of b
-    if(char === b) {
-      return true;
-    }
+  function atEndOfString(quote) {
+    return function atEndOfStringFn (char) {
+      // If the next character was our opening quote, stop looping
+      if(char === quote) {
+        return true;
+      }
 
-    // If line break or EOF is reached, throw an error
-    if(isCtrlChar(char)) {
-      throw 'Error: unterminated string literal: ' + char;
-    }
+      // If line break or EOF is reached, throw an error
+      if(isCtrlChar(char)) {
+        throw 'Error: unterminated string literal: ' + char;
+      }
 
-    // If there is a slash (multi-line separator), skip to the next character
-    if(char == '\\') {
-      file.next();
-    }
+      // If there is a slash (multi-line separator), skip to the next character
+      if(char == '\\') {
+        file.next();
+      }
+    };
   }
 
   /**
@@ -370,7 +371,7 @@ function jsmin(input, level, comment) {
 
       // Read until we close the string
       var startIndex = file.pointer;
-      a = readUntil([atEndOfString]);
+      a = readUntil([atEndOfString(b)]);
 
       // Get the end index and retStr
       var endIndex = file.pointer - 1,
