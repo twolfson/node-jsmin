@@ -370,47 +370,27 @@ function jsmin(input, level, comment) {
       retArr.push(a, b);
 
       // Read until we close the regular expression
+      var startIndex = file.pointer;
       a = readUntil([function atEndOfRegExp (char) {
         // If it closes the regexp, stop looping
         if(char == '/') {
           return true;
         } else if(char == '\\') {
         // Otherwise, if it is is a slash (escaping the next character)
-          // Save it to the array
-          retArr.push(char);
-
           // Retrieve the next character
           char = file.next();
-        } else if(char <= '\n') {
+        } else if(isCtrlChar(char)) {
         // Otherwise, if it is a line break or EOF, throw an error
           throw 'Error: unterminated Regular Expression literal';
         }
-
-        // Save the character to our buffer
-        retArr.push(char);
       }]);
-      // for(; ; ) {
-      //   // Get the next character
-      //   a = file.next();
 
-        // // If it closes the regexp, stop looping
-        // if(a == '/') {
-        //   break;
-        // } else if(a == '\\') {
-        // // Otherwise, if it is is a slash (escaping the next character)
-        //   // Save it to the array
-        //   retArr.push(a);
+      // Get the end index and retStr
+      var endIndex = file.pointer - 1,
+          retStr = input.slice(startIndex, endIndex);
 
-        //   // Retrieve the next character
-        //   a = file.next();
-        // } else if(a <= '\n') {
-        // // Otherwise, if it is a line break or EOF, throw an error
-        //   throw 'Error: unterminated Regular Expression literal';
-        // }
-
-        // Save the character to our buffer
-      //   retArr.push(a);
-      // }
+      // Add the retStr to our retArr
+      retArr.push(retStr);
 
       // Now that we are out of the regular expression, move off of the last slash
       b = next();
@@ -426,7 +406,6 @@ function jsmin(input, level, comment) {
   linefeeds.
   Most spaces and linefeeds will be removed.
   */
-
   // Minification function
   function minify() {
     // Create a buffered array to return
