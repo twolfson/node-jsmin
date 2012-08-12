@@ -445,36 +445,26 @@ function jsmin(input, level, comment) {
     while(!isEOF(a)) {
       // If a is whitespace
       if (a === ' ') {
-        // If b is alphanumeric, output a, copy b to a, get b
+        // If b is alphanumeric, output a
+        // Explanation: If we have `y x`, then we would like to delimit y and x with whitespace and not call `yx`
         if(isAlphanum(b)) {
-          outputAandMoveChars();
-        } else {
-        // Otherwise, copy b to a, get b (skipping output of a)
-          moveChars();
+          outputA();
         }
+
+        // Move the characters
+        moveChars();
       } else if (a === '\n') {
       // Otherwise, if a is a line feed, then
+        // If b is more whitespace, move to the next b
+        if (b === ' ') {
+          getNextB();
+        } else if ('{[(+-'.has(b) || isAlphanum(b) || (level == 1 && b !== '\n')) {
         // If b is starting some scoping or doing a unary operation, then output a (line break), copy b to a, get b
         // TODO: huh?
-        if ('{[(+-'.has(b)) {
           outputAandMoveChars();
-        } else if (b === ' ') {
-        // Otherwise, if it is whitespace, move to the next b
-          getNextB();
         } else {
-        // Otherwise
-          // If b is alphanumeric, output a, copy b to a, get the next b
-          if(isAlphanum(b)) {
-            outputAandMoveChars();
-          } else {
-          // Otherwise, if we are on the weakest minification and b is not a linebreak, output a
-            // In both cases, copy b to a and get the next b
-            if(level == 1 && b != '\n') {
-              outputAandMoveChars();
-            } else {
-              moveChars();
-            }
-          }
+        // Otherwise, copy b to a and get the next b
+          moveChars();
         }
       } else {
       // Otherwise (a is not whitespace or a line feed)
