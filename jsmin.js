@@ -476,28 +476,29 @@ function jsmin(input, level, comment) {
         } else if (b === ' ') {
         // Otherwise, get the next b
           getNextB();
-        } else if (b === '\n' && (level === 1 && a !== '\n')) {
+        } else if (b === '\n' && (level === 1/* && a !== '\n'*/)) {
+          // TODO: Is there ever a time when we are here and a === '\n'? -- No since else if (a === '\n') covers that...
         // If b is a line feed
         // If we are on the weak minification and a is not a line feed as well (not possible due to previous switch?)
           // Then, output a, copy b to a, get the next b
           outputAandMoveChars();
-        } else if (b === '\n') {
+        } else if (b === '\n' && '}])+-"\''.has(a) && level === 3) {
         // If b is a line feed
           // If we are closing an object or quotes before this
           // If we are doing aggressive minification, ignore current a and b. Get the next b.
-          if ('}])+-"\''.has(a) && level === 3) {
-              getNextB();
-          } else if ('}])+-"\''.has(a) || isAlphanum(a)) {
+          getNextB();
+        } else if (b === '\n' && '}])+-"\''.has(a) || isAlphanum(a)) {
+        // If b is a line feed
           // If we are closing an object or quotes before this
           // Otherwise, output a, copy b to a, get the next b
           // OR
           // Otherwise
-            // If a is alphanumeric, output a, copy b to a, get the next b
-            outputAandMoveChars();
-          } else {
+          // If a is alphanumeric, output a, copy b to a, get the next b
+          outputAandMoveChars();
+        } else if (b === '\n') {
+        // If b is a line feed
           // Otherwise, get the next b
-            getNextB();
-          }
+          getNextB();
         } else {
         // Otherwise (b is not whitespace or a linefeed), output a, copy b to a, get the next b
           outputAandMoveChars();
