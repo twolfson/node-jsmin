@@ -302,7 +302,41 @@ function jsmin(input, level, comment) {
           var endIndex = file.pointer,
               retVal = input.slice(startIndex, endIndex),
               len = retVal.length,
-              lenMinus2 = len - 2;
+              lenMinus2 = len - 2,
+              endMinus2 = endIndex - 2,
+              chunks = [],
+              asteriskRegExp = /\*/g;
+
+          // Break up the asteriskRegExp into chunks
+
+          // Set the asteriskRegExp to start chunking after the first asterisk
+          asteriskRegExp.lastIndex = startIndex + 2;
+
+          // Loop over the chunks
+          var lastIndex = startIndex,
+              index;
+          while (true) {
+            // Find the next asterisk and its location
+            asteriskRegExp.exec(input);
+            index = asteriskRegExp.lastIndex;
+
+            // If we have passed the end index or have looped around, stop chunking
+            if (index > endMinus2 || index < startIndex) {
+              break;
+            }
+
+            // Otherwise, add on the region between indices and update the lastIndex
+            // TODO: Logic on if chunk is interesting
+            chunks.push([lastIndex, index]);
+            lastIndex = index;
+          }
+
+          chunks.forEach(function (chunk) {
+            console.log(input.slice(chunk[0], chunk[1]));
+          });
+
+          // The final chunk will be handled by 'b'?
+          console.log(input.slice(endMinus2, endIndex));
 
           // TODO: This should be a 'legacy' option in JSMin?
           // Remove non-head/tail asterisks as JSMin has done before
@@ -313,8 +347,11 @@ function jsmin(input, level, comment) {
             return (index === 1 || index === lenMinus2) ? '*' : '';
           });
 
-          // Return the retVal;
+          // output.addChar(retVal);
+
+          // Return the retVal
           return retVal;
+          // return '';
         }
 
         // Otherwise, read in the remainder of the (unimportant) multiline comment
@@ -410,7 +447,7 @@ function jsmin(input, level, comment) {
     // If it is a slash and looks like a regular expression
     // PERSONAL_TODO: Determine what 'a' is and why this works
     // TODO: See if this can be combined with functionality from _copyBtoA (I don't think so)
-    if(b == '/' && '(,=:[!&|'.has(a)) {
+    if(b === '/' && '(,=:[!&|'.has(a)) {
       // Add a then b onto the output
       output.addChar(a);
       output.addChar(b);
