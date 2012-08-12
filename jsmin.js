@@ -227,37 +227,29 @@ function jsmin(input, level, comment) {
     }
   }
 
-  function atEndOfRegExp(char) {
-    // If the character is a slash (closes the regexp), stop looping
-    if(char === '/') {
-      return true;
-    } else if(char === '\\') {
-    // Otherwise, if it is is a slash (escaping the next character), skip it
-      file.next();
-    } else if(isCtrlChar(char)) {
-    // Otherwise, if it is a line break or EOF, throw an error
-      throw 'Error: unterminated Regular Expression literal';
-    }
-  }
+  // Create common function for RegExp and string's
+  function charEncountered(endChar, typeMessage) {
+    // Fallback the message
+    typeMessage = typeMessage || 'Error: unterminated literal: ';
 
-  // TODO: While jQuery does do this, I am worried about when char == '\\'
-  function atEndOfString(quote) {
-    return function atEndOfStringFn (char) {
+    return function charEncounteredFn (char) {
       // If the next character was our opening quote, stop looping
-      if(char === quote) {
+      if(char === endChar) {
         return true;
-      }
-
-      // If line break or EOF is reached, throw an error
-      if(isCtrlChar(char)) {
-        throw 'Error: unterminated string literal: ' + char;
-      }
-
-      // If there is a slash (multi-line separator), skip to the next character
-      if(char == '\\') {
+      } else if (isCtrlChar(char)) {
+      // Otherwise, if line break or EOF is reached, throw an error
+        throw typeMessage + char;
+      } else if (char == '\\') {
+      // Otherwise, if there is a slash (multi-line separator), skip to the next character
         file.next();
       }
     };
+  }
+
+  var atEndOfRegExp = charEncountered('/', 'Error: unterminated Regular Expression literal');
+
+  function atEndOfString(quote) {
+    return charEncountered(quote, 'Error: unterminated string literal: ');
   }
 
   /**
@@ -370,6 +362,7 @@ function jsmin(input, level, comment) {
       retArr.push(a);
 
       // Read until we close the string
+      // TODO: While jQuery does do this, I am worried about when char == '\\' (should a = readUntil or not?)
       var startIndex = file.pointer;
       a = readUntil([atEndOfString(b)]);
 
