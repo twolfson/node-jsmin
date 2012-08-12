@@ -349,6 +349,7 @@ function jsmin(input, level, comment) {
 
     // Push on a to the the array
     retArr.push(a);
+    output.addChar(a);
 
     _copyBtoA(retArr);
 
@@ -381,6 +382,7 @@ function jsmin(input, level, comment) {
     if(/'|"/.test(b)) {
       // Push the current character to the array
       retArr.push(a);
+      output.addChar(a);
 
       // Read until we close the string
       // TODO: While jQuery does do this, I am worried about when char == '\\' (should a = readUntil or not?)
@@ -393,6 +395,7 @@ function jsmin(input, level, comment) {
 
       // Add the retStr to our retArr
       retArr.push(retStr);
+      output.add(startIndex, endIndex);
     }
   }
 
@@ -402,9 +405,12 @@ function jsmin(input, level, comment) {
 
     // If it is a slash and looks like a regular expression
     // PERSONAL_TODO: Determine what 'a' is and why this works
+    // TODO: See if this can be combined with functionality from _copyBtoA (I don't think so)
     if(b == '/' && '(,=:[!&|'.has(a)) {
       // Add a then b onto the array
       retArr.push(a, b);
+      output.addChar(a);
+      output.addChar(b);
 
       // Read until we close the regular expression
       var startIndex = file.pointer;
@@ -416,6 +422,7 @@ function jsmin(input, level, comment) {
 
       // Add the retStr to our retArr
       retArr.push(retStr);
+      output.add(startIndex, endIndex);
 
       // Now that we are out of the regular expression, move off of the last slash
       b = next();
@@ -568,5 +575,5 @@ function jsmin(input, level, comment) {
   }
 
   // Return the comment + minified code
-  return retVal;
+  return output.val();
 }
