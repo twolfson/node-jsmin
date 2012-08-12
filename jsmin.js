@@ -489,6 +489,10 @@ function jsmin(input, level, comment) {
 
     // While we are not at EOF
     while(!isEOF(a)) {
+      if (b.length > 1) {
+        console.log(a.length, escape(a), a === '\n');
+      }
+
       // If a is whitespace
       if (a === ' ') {
         // If b is alphanumeric, output a, copy b to a, get b
@@ -500,9 +504,14 @@ function jsmin(input, level, comment) {
         }
       } else if (a === '\n') {
       // Otherwise, if a is a line feed, then
+        if (b.length > 1) {
+          output.addChar(a);
+          output.addChar(b);
+          a = '';
+          b = '';
+        } else if ('{[(+-'.has(b)) {
         // If b is starting some scoping or doing a unary operation, then output a (line break), copy b to a, get b
         // TODO: huh?
-        if ('{[(+-'.has(b)) {
           outputAandMoveChars();
         } else if (b === ' ') {
         // Otherwise, if it is whitespace, move to the next b
