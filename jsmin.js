@@ -89,7 +89,6 @@ function jsmin(input, level, comment) {
 
   // Set up variables and constants
   var EOF = -1,
-      IC_PLACEHOLDER = {charCodeAt: function () { return 10; }, valueOf: function () { return ''; }, toString: function () { return ''; }}
       LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
       DIGITS = '0123456789',
       ALNUM = LETTERS + DIGITS + '_$\\';
@@ -101,7 +100,7 @@ function jsmin(input, level, comment) {
 
   //TODO: Move isAlpha, Ctrl, EOF, functions onto file pointer
   function isAlphanum(c) {
-    return !isEOF(c) && c !== IC_PLACEHOLDER && (ALNUM.has(c) || c.charCodeAt(0) > 126);
+    return !isEOF(c) && (ALNUM.has(c) || c.charCodeAt(0) > 126);
   }
 
   // Helper function for determining if a character is a control one.
@@ -299,55 +298,12 @@ function jsmin(input, level, comment) {
           // Read until we close the important comment
           readUntil([atEndOfMultilineComment], 'nextImportant');
 
-          // Return the important comment
-          var endIndex = file.pointer,
-              endMinus2 = endIndex - 2,
-              chunks = [],
-              asteriskRegExp = /\*/g;
+          // Output the important comment
+          var endIndex = file.pointer;
+          output.add(startIndex, endIndex);
 
-          // Set the asteriskRegExp to start chunking after the first asterisk
-          asteriskRegExp.lastIndex = startIndex + 2;
-
-          // Loop over the chunks
-          var lastIndex = startIndex,
-              index;
-          while (true) {
-            // Find the next asterisk and its location
-            asteriskRegExp.exec(input);
-            index = asteriskRegExp.lastIndex;
-
-            // If we have passed the end index or have looped around, stop chunking
-            if (index > endMinus2 || index < startIndex) {
-              break;
-            }
-
-            // Otherwise, add on the region between indices and update the lastIndex
-            // TODO: Logic on if chunk is interesting
-            chunks.push([lastIndex, index]);
-            lastIndex = index;
-          }
-
-          var testVal = "";
-
-          // TODO: This should be a 'legacy' option in JSMin?
-          // Remove non-head/tail asterisks as JSMin has done before
-          // TODO: This is the one place where b is not a single character
-
-          chunks.forEach(function (chunk) {
-            output.add(chunk[0], chunk[1] - 1);
-            // testVal += input.slice(chunk[0], chunk[1] - 1);
-          });
-
-          output.add(lastIndex, endIndex);
-          // testVal = input.slice(lastIndex, endIndex);
-
-          // The final chunk will be handled by 'b'?
-          // output.addChar(retVal);
-
-          // Return the retVal
-          // return input.slice(lastIndex, endIndex);
-          return IC_PLACEHOLDER;
-          // return ' ';
+          // Return a space for proper padding
+          return ' ';
         }
 
         // Otherwise, read in the remainder of the (unimportant) multiline comment
@@ -474,8 +430,6 @@ function jsmin(input, level, comment) {
     // Get the next character and delete it from the buffer
     getNextB();
 
-    console.log(b === IC_PLACEHOLDER)
-
     // While we are not at EOF
     while(!isEOF(a)) {
       // If a is whitespace
@@ -492,10 +446,6 @@ function jsmin(input, level, comment) {
         // If b is starting some scoping or doing a unary operation, then output a (line break), copy b to a, get b
         // TODO: huh?
         if ('{[(+-'.has(b)) {
-          outputAandMoveChars();
-        } else if (a !== '' && b === IC_PLACEHOLDER) {
-          console.log(a + '', b + '');
-          b = '';
           outputAandMoveChars();
         } else if (b === ' ') {
         // Otherwise, if it is whitespace, move to the next b
