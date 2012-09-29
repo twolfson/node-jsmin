@@ -71,6 +71,12 @@ String.prototype.charCode = function () {
   return charCode;
 };
 
+// This is only for chars
+String.prototype.isEqualTo = function (str) {
+  var val = this.valueOf();
+  return val === str;
+};
+
 // Export JSMin which we are about to create
 exports.jsmin = jsmin;
 
@@ -180,7 +186,7 @@ function jsmin(input, options) {
       var char = this.nextImportant();
 
       // If the character is a carriage return, cast it as a line feed
-      if(char === '\r') {
+      if(char.isA('\r')) {
         char = '\n';
       }
 
@@ -235,7 +241,7 @@ function jsmin(input, options) {
       // If it is an asterisk
       case '*':
         // and the character after that is a slash, then we are closing the comment
-        if(file.peek() == '/') {
+        if(file.peek().isA('/')) {
           // Move the cursor onto this slash
           file.next();
 
@@ -256,12 +262,13 @@ function jsmin(input, options) {
 
     return function charEncounteredFn (char) {
       // If the next character was our opening quote, stop looping
-      if(char === endChar) {
+      // TODO: This will be invalid with pointers
+      if(char.isEqualTo(endChar)) {
         return true;
       } else if (isCtrlChar(char)) {
       // Otherwise, if line break or EOF is reached, throw an error
         throw typeMessage + char;
-      } else if (char == '\\') {
+      } else if (char.isA('\\')) {
       // Otherwise, if there is a slash (multi-line separator), skip to the next character
         file.next();
       }
@@ -455,7 +462,7 @@ function jsmin(input, options) {
     // While we are not at EOF
     while(!isEOF(a)) {
       // If a is whitespace
-      if (a === ' ') {
+      if (a.isA(' ')) {
         // If b is alphanumeric, output a, copy b to a, get b
         if(isAlphanum(b)) {
           outputAandMoveChars();
@@ -463,13 +470,13 @@ function jsmin(input, options) {
         // Otherwise, copy b to a, get b (skipping output of a)
           moveChars();
         }
-      } else if (a === '\n') {
+      } else if (a.isA('\n')) {
       // Otherwise, if a is a line feed, then
         // If b is starting some scoping or doing a unary operation, then output a (line break), copy b to a, get b
         // TODO: huh?
         if (b.isA('{[(+-')) {
           outputAandMoveChars();
-        } else if (b === ' ') {
+        } else if (b.isA(' ')) {
         // Otherwise, if it is whitespace, move to the next b
           getNextB();
         } else {
@@ -490,7 +497,7 @@ function jsmin(input, options) {
       } else {
       // Otherwise (a is not whitespace or a line feed)
         // If b is whitespace
-        if (b === ' ') {
+        if (b.isA(' ')) {
           // If a is alphanumeric, output it, swap b to a, get the next b and break out
           if(isAlphanum(a)) {
             outputAandMoveChars();
@@ -510,7 +517,7 @@ function jsmin(input, options) {
             // TODO: Right? since a is before a? (so tired and confused)
             if (a.isA('}])+-"\'')) {
               // If we are doing aggressive minification, ignore current a and b. Get the next b.
-              if(level == 3) {
+              if(level === 3) {
                 getNextB();
               } else {
               // Otherwise, output a, copy b to a, get the next b
