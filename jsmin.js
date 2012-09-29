@@ -68,24 +68,23 @@ exports.jsmin = jsmin;
 /**
  * JSMin function
  * @param {String} input String to minify on
- * @param {Number} [level=2] Level of compression to use (1 - 3; min - aggro). See license block for more info.
- * @param {String} [comment=""] Comment to do prepend to final output with
- * @returns {String} Minified code
+ * @param {Object} options Options to use
+ * @param {Number} [options.level=2] Level of compression to use (1 - 3; min - aggro). See license block for more info.
+ * @param {String} [options.comment=""] Comment to do prepend to final output with
+ * @returns {Object} retObj Object containing pieces to return
+ * @returns {String} retObj.code Minified code
+ * @returns {Object} retObj.codeMap Index based character map
  */
-function jsmin(input, level, comment) {
-  // TODO: Create an output object which has an 'add' function
-  // This takes a start and end index to add to the output
-  // There should also be a 'addChar' function which adds the character at a certain index (could optimize with charAt)
-
+function jsmin(input, options) {
   // If no input is provided, return an empty string
-  // DEV: Move level, comment into options object
   if (!input) return '';
 
-  // If there is no level, fallback to 2
-  if (!level) level = 2;
+  // Fallback options
+  options = options || {};
 
-  // If no comment has been provided, fallback to an empty string
-  if (!comment) comment = '';
+  // Grab level and comment
+  var level = options.level || 2,
+      comment = options.comment || '';
 
   // Set up variables and constants
   var EOF = -1,
@@ -539,6 +538,10 @@ function jsmin(input, level, comment) {
     retVal = comment + '\n' + retVal;
   }
 
-  // Return the comment + minified code
-  return retVal;
+  // Return the minified code and its codeMap
+  var retObj = {
+    code: retVal,
+    codeMap: {}
+  };
+  return retObj;
 }
