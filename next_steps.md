@@ -1,0 +1,3 @@
+- Move to 'isA' method for strings
+- Move to Pointer model for next etc #stillNeedEmptyStringLogic
+- Add enforcement of pointer only for output

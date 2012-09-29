@@ -61,6 +61,9 @@ missing semicolons (can be regressive)
 String.prototype.has = function(c) {
   return this.indexOf(c) > -1;
 };
+String.prototype.isA = function(str) {
+  return str.indexOf(this) > -1;
+};
 
 // Export JSMin which we are about to create
 exports.jsmin = jsmin;
