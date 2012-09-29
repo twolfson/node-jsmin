@@ -27,5 +27,8 @@
    },
    "bin" : {
        "jsmin" : "./bin/jsmin"
+   },
+   "scripts": {
+      "test": "node tests/jsmin.test.js"
    }
 }
