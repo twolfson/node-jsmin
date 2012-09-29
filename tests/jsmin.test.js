@@ -6,13 +6,13 @@ var assert = require('assert'),
 	expectedJQueryMin1 = fs.readFileSync(__dirname + '/test_files/jquery.min.1.js', 'utf8'),
   expectedJQueryMin2 = fs.readFileSync(__dirname + '/test_files/jquery.min.2.js', 'utf8'),
   expectedJQueryMin3 = fs.readFileSync(__dirname + '/test_files/jquery.min.3.js', 'utf8'),
-	actualJQueryMin1 = jsmin.jsmin(jquerySrc, 1),
-	actualJQueryMin2 = jsmin.jsmin(jquerySrc, 2),
-	actualJQueryMin3 = jsmin.jsmin(jquerySrc, 3);
+	actualJQueryMin1 = jsmin.jsmin(jquerySrc, {level: 1}).code,
+	actualJQueryMin2 = jsmin.jsmin(jquerySrc, {level: 2}).code,
+	actualJQueryMin3 = jsmin.jsmin(jquerySrc, {level: 3}).code;
 
-fs.writeFileSync(__dirname + '/test_files/jquery.min.1.js', actualJQueryMin1, 'utf8');
-fs.writeFileSync(__dirname + '/test_files/jquery.min.2.js', actualJQueryMin2, 'utf8');
-fs.writeFileSync(__dirname + '/test_files/jquery.min.3.js', actualJQueryMin3, 'utf8');
+// fs.writeFileSync(__dirname + '/test_files/jquery.min.1.js', actualJQueryMin1, 'utf8');
+// fs.writeFileSync(__dirname + '/test_files/jquery.min.2.js', actualJQueryMin2, 'utf8');
+// fs.writeFileSync(__dirname + '/test_files/jquery.min.3.js', actualJQueryMin3, 'utf8');
 
 // Output to debug
 fs.writeFileSync(__dirname + '/jsmin.debug.js', actualJQueryMin1, 'utf8');
