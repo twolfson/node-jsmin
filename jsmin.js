@@ -128,7 +128,7 @@ function jsmin(input, options) {
 
   function Pointer(input) {
     // Create an internal pointer and limit for the file
-    this.pointer = 0;
+    this.index = 0;
     this.input = input;
     this.end = input.length;
   }
@@ -141,19 +141,19 @@ function jsmin(input, options) {
     // This function is explicity for important comments (i.e. /*! */)
     // It is possible for this to contain carriage returns and we require unaltered content since these could be licenses (main reason to use important comment).
     nextImportant: function nextImportant () {
-      var pointer = this.pointer,
+      var index = this.index,
           end = this.end;
 
       // If we are at end of the file, return EOF
-      if(pointer === end) {
+      if(index === end) {
         return EOF;
       }
 
       // Set the current character to our index
-      char = this.input.charAt(pointer);
+      char = this.input.charAt(index);
 
-      // Increment the pointer
-      this.pointer += 1;
+      // Increment the index
+      this.index += 1;
 
       // If the character is not of human importance (is a control character besides line feed and carraige return), cast it to a space
       if(isCtrlChar(char) && char !== '\n' && char !== '\r') {
@@ -187,8 +187,8 @@ function jsmin(input, options) {
       // Grab the next char
       var nextChar = this.next();
 
-      // Decrement the file pointer
-      this.pointer -= 1;
+      // Decrement the file index
+      this.index -= 1;
 
       // Return the next character
       return nextChar;
@@ -272,7 +272,7 @@ function jsmin(input, options) {
    */
   function next() {
     // Get the next character
-    var startIndex = file.pointer,
+    var startIndex = file.index,
         char = file.next();
 
     // If it is a slash (indicitvate of regexp, multi-line strings, or comments)
@@ -298,7 +298,7 @@ function jsmin(input, options) {
           readUntil([atEndOfMultilineComment], 'nextImportant');
 
           // Return the important comment
-          var endIndex = file.pointer,
+          var endIndex = file.index,
               retVal = input.slice(startIndex, endIndex),
               len = retVal.length,
               lenMinus2 = len - 2;
@@ -395,11 +395,11 @@ function jsmin(input, options) {
 
       // Read until we close the string
       // TODO: While jQuery does do this, I am worried about when char == '\\' (should a = readUntil or not?)
-      var startIndex = file.pointer;
+      var startIndex = file.index;
       a = readUntil([atEndOfString(b)]);
 
       // Get the end index and retStr
-      var endIndex = file.pointer - 1;
+      var endIndex = file.index - 1;
 
       // Add the retStr to our output
       output.add(startIndex, endIndex);
@@ -419,11 +419,11 @@ function jsmin(input, options) {
       output.addChar(b);
 
       // Read until we close the regular expression
-      var startIndex = file.pointer;
+      var startIndex = file.index;
       a = readUntil([atEndOfRegExp]);
 
       // Get the end index and retStr
-      var endIndex = file.pointer - 1;
+      var endIndex = file.index - 1;
 
       // Add the retStr to the output
       output.add(startIndex, endIndex);
