@@ -58,24 +58,33 @@ missing semicolons (can be regressive)
 
 // Helper function to determine if a string contains a character or not
 // TODO: Delete me ASAP
+String.prototype.is = function (str) {
+  return str === this[0];
+};
+
+String.prototype.isNot = function (str) {
+  return str !== this[0];
+};
+
 String.prototype.isA = function (str) {
   return str.indexOf(this) > -1;
 };
 
 String.prototype.isNotA = function (str) {
-  return !this.isA(str);
+  return str.indexOf(this) === -1;
 };
 
 String.prototype.charCode = function () {
-  var charCode = this.charCodeAt(0);
-  return charCode;
+  return this.charCodeAt(0);
 };
 
 // This is only for chars
 String.prototype.isEqualTo = function (str) {
-  var val = this.valueOf();
-  return val === str;
+  return this[0] === str;
 };
+
+function falseFn() { return false; }
+function trueFn() { return true; }
 
 // Export JSMin which we are about to create
 exports.jsmin = jsmin;
@@ -102,7 +111,7 @@ function jsmin(input, options) {
       comment = options.comment || '';
 
   // Set up variables and constants
-  var EOF = {isA:function(){return false;}, isNotA:function(){return true;}},
+  var EOF = {is:falseFn, isA:falseFn, isNot:trueFn, isNotA:trueFn},
       LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
       DIGITS = '0123456789',
       ALNUM = LETTERS + DIGITS + '_$\\';
@@ -186,7 +195,7 @@ function jsmin(input, options) {
       var char = this.nextImportant();
 
       // If the character is a carriage return, cast it as a line feed
-      if(char.isA('\r')) {
+      if(char.is('\r')) {
         char = '\n';
       }
 
@@ -241,7 +250,7 @@ function jsmin(input, options) {
       // If it is an asterisk
       case '*':
         // and the character after that is a slash, then we are closing the comment
-        if(file.peek().isA('/')) {
+        if(file.peek().is('/')) {
           // Move the cursor onto this slash
           file.next();
 
@@ -268,7 +277,7 @@ function jsmin(input, options) {
       } else if (isCtrlChar(char)) {
       // Otherwise, if line break or EOF is reached, throw an error
         throw typeMessage + char;
-      } else if (char.isA('\\')) {
+      } else if (char.is('\\')) {
       // Otherwise, if there is a slash (multi-line separator), skip to the next character
         file.next();
       }
@@ -291,21 +300,21 @@ function jsmin(input, options) {
         char = file.next();
 
     // If it is a slash (indicitvate of regexp, multi-line strings, or comments)
-    if(char.isA('/')) {
+    if(char.is('/')) {
       // Read in the following character
       var nextChar = file.peek();
 
       // If the next char is a slash, then this is a single line comment (i.e. // I am a comment )
-      if (nextChar.isA('/')) {
+      if (nextChar.is('/')) {
         // Read until we hit a ctrlChar (line feed or EOF)
         return readUntil([isCtrlChar]);
-      } else if (nextChar.isA('*')) {
+      } else if (nextChar.is('*')) {
       // Otherwise, if it is an asterisk, then this is a multi-line comment (i.e. /* I am a multi-line comment */)
         // Move the pointer onto the asterisk
         file.next();
 
         // If this comment is an important comment (i.e. the following character is an exclamation point -- /*! Important comment */), we are required to save it
-        if(file.peek().isA('!')) {
+        if(file.peek().is('!')) {
           // Move the pointer onto the exclamation point
           file.next();
 
@@ -428,7 +437,7 @@ function jsmin(input, options) {
     // If it is a slash and looks like a regular expression
     // PERSONAL_TODO: Determine what 'a' is and why this works
     // TODO: See if this can be combined with functionality from _copyBtoA (I don't think so)
-    if(b.isA('/') && a.isA('(,=:[!&|')) {
+    if(b.is('/') && a.isA('(,=:[!&|')) {
       // Add a then b onto the output
       output.addChar(a);
       output.addChar(b);
@@ -462,7 +471,7 @@ function jsmin(input, options) {
     // While we are not at EOF
     while(!isEOF(a)) {
       // If a is whitespace
-      if (a.isA(' ')) {
+      if (a.is(' ')) {
         // If b is alphanumeric, output a, copy b to a, get b
         if(isAlphanum(b)) {
           outputAandMoveChars();
@@ -470,13 +479,13 @@ function jsmin(input, options) {
         // Otherwise, copy b to a, get b (skipping output of a)
           moveChars();
         }
-      } else if (a.isA('\n')) {
+      } else if (a.is('\n')) {
       // Otherwise, if a is a line feed, then
         // If b is starting some scoping or doing a unary operation, then output a (line break), copy b to a, get b
         // TODO: huh?
         if (b.isA('{[(+-')) {
           outputAandMoveChars();
-        } else if (b.isA(' ')) {
+        } else if (b.is(' ')) {
         // Otherwise, if it is whitespace, move to the next b
           getNextB();
         } else {
@@ -497,7 +506,7 @@ function jsmin(input, options) {
       } else {
       // Otherwise (a is not whitespace or a line feed)
         // If b is whitespace
-        if (b.isA(' ')) {
+        if (b.is(' ')) {
           // If a is alphanumeric, output it, swap b to a, get the next b and break out
           if(isAlphanum(a)) {
             outputAandMoveChars();
@@ -505,7 +514,7 @@ function jsmin(input, options) {
             // Otherwise, get the next b
             getNextB();
           }
-        } else if (b.isA('\n')) {
+        } else if (b.is('\n')) {
         // If b is a line feed
           // If we are on the weak minification and a is not a line feed as well (not possible due to previous switch?)
           // Then, output a, copy b to a, get the next b
