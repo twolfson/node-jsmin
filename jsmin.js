@@ -3,12 +3,12 @@
 ** on Franck Marica's jsmin.js by Peteris Krumins.
 */
 
-/*! 
+/*!
 jsmin.js - 2010-01-15
 Author: NanaLich (http://www.cnblogs.com/NanaLich)
-Another patched version for jsmin.js patched by Billy Hoffman, 
+Another patched version for jsmin.js patched by Billy Hoffman,
 this version will try to keep CR LF pairs inside the important comments
-away from being changed into double LF pairs. 
+away from being changed into double LF pairs.
 
 jsmin.js - 2009-11-05
 Author: Billy Hoffman
@@ -61,11 +61,25 @@ String.prototype.has = function(c) {
 };
 
 exports.jsmin = jsmin;
-function jsmin(input, level, comment) {
 
-  if (!input) return '';
-  if (!level) level = 2;
-  if (!comment) comment = '';
+/**
+ * jsmin - JavaScript minifier
+ * @param {String} input JavaScript to minify
+ * @param {Object} [options] Options to minify under
+ * @param {Number} [options.level=2] Aggressiveness of minification
+ * @param {String} [options.comment=""] Comment to prefix to minified JavaScript
+ * @return {Object} retObj Object containing minified code and code map
+ * @return {String} retObj.code Minified JavaScript
+ * @return {Object} retObj.codeMap Map of coordinates and ranges from original code to minified code
+ */
+function jsmin(input, options) {
+  // Fallback input and options
+  input = input || '';
+  options = options || {};
+
+  // Grab the level and comment
+  var level = options.level || 2,
+      comment = options.comment || '';
 
   var a = '',
         b = '',
@@ -173,7 +187,7 @@ function jsmin(input, level, comment) {
                 case EOF:
                   throw 'Error: Unterminated comment.';
                 default:
-                  //modern JS engines handle string concats much better than the 
+                  //modern JS engines handle string concats much better than the
                   //array+push+join hack.
                   d += c;
               }
@@ -357,9 +371,16 @@ function jsmin(input, level, comment) {
 
   ret = m(input);
 
+  var retVal = ret;
   if (comment) {
-    return comment + '\n' + ret;
+    retVal = comment + '\n' + ret;
   }
-  return ret;
+
+  var retObj = {
+    'code': retVal,
+    'codeMap': {}
+  };
+
+  return retObj;
 }
 
