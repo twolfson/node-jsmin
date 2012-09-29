@@ -57,10 +57,7 @@ missing semicolons (can be regressive)
 */
 
 // Helper function to determine if a string contains a character or not
-// TODO: Move off of has and onto file pointer .isA
-String.prototype.has = function(c) {
-  return this.indexOf(c) > -1;
-};
+// TODO: Delete me ASAP
 String.prototype.isA = function(str) {
   return str.indexOf(this) > -1;
 };
@@ -90,11 +87,10 @@ function jsmin(input, options) {
       comment = options.comment || '';
 
   // Set up variables and constants
-  var EOF = -1,
+  var EOF = {isA:function(c){return false;}},
       LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
       DIGITS = '0123456789',
       ALNUM = LETTERS + DIGITS + '_$\\';
-  // DEV: EOF should be an object or unique reference
 
   /* isAlphanum -- return true if the character is a letter, digit, underscore,
   dollar sign, or non-ASCII character.
@@ -102,7 +98,7 @@ function jsmin(input, options) {
 
   //TODO: Move isAlpha, Ctrl, EOF, functions onto file pointer
   function isAlphanum(c) {
-    return !isEOF(c) && (ALNUM.has(c) || c.charCodeAt(0) > 126);
+    return !isEOF(c) && (c.isA(ALNUM) || c.charCodeAt(0) > 126);
   }
 
   // Helper function for determining if a character is a control one.
@@ -416,7 +412,7 @@ function jsmin(input, options) {
     // If it is a slash and looks like a regular expression
     // PERSONAL_TODO: Determine what 'a' is and why this works
     // TODO: See if this can be combined with functionality from _copyBtoA (I don't think so)
-    if(b == '/' && '(,=:[!&|'.has(a)) {
+    if(b == '/' && a.isA('(,=:[!&|')) {
       // Add a then b onto the output
       output.addChar(a);
       output.addChar(b);
@@ -462,7 +458,7 @@ function jsmin(input, options) {
       // Otherwise, if a is a line feed, then
         // If b is starting some scoping or doing a unary operation, then output a (line break), copy b to a, get b
         // TODO: huh?
-        if ('{[(+-'.has(b)) {
+        if (b && b.isA('{[(+-')) {
           outputAandMoveChars();
         } else if (b === ' ') {
         // Otherwise, if it is whitespace, move to the next b
@@ -503,7 +499,7 @@ function jsmin(input, options) {
           // Otherwise
             // If we are closing an object or quotes before this
             // TODO: Right? since a is before a? (so tired and confused)
-            if ('}])+-"\''.has(a)) {
+            if (a.isA('}])+-"\'')) {
               // If we are doing aggressive minification, ignore current a and b. Get the next b.
               if(level == 3) {
                 getNextB();
