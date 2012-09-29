@@ -93,15 +93,6 @@ function jsmin(input, options) {
       ALNUM = LETTERS + DIGITS + '_$\\';
   // DEV: EOF should be an object or unique reference
 
-  /* isAlphanum -- return true if the character is a letter, digit, underscore,
-  dollar sign, or non-ASCII character.
-  */
-
-  //TODO: Move isAlpha, Ctrl, EOF, functions onto file pointer
-  function isAlphanum(c) {
-    return !isEOF(c) && (ALNUM.has(c) || c.charCodeAt(0) > 126);
-  }
-
   // Helper function for determining if a character is a control one.
   // We keep raw function separate from isEOF to prevent any unwanted nastiness.
   // Nerd fun: ' ' has a charCode of 32. Any characters below that are either tabs, line feeds, or something not that interesting. http://www.asciitable.com/
@@ -114,25 +105,43 @@ function jsmin(input, options) {
     return retVal;
   }
 
-  // Determine if a character is EOF or not
+  // Sugar control char checker
+  function isCtrlChar (char) {
+    var retVal = isCtrlCharRaw(char) || isEOF(char);
+    return retVal;
+  }
+
   function isEOF(char) {
     var retVal = char === EOF;
     return retVal;
   }
 
-  // Sugar control char checker
-  function isCtrlChar(char) {
-    var retVal = isCtrlCharRaw(char) || isEOF(char);
-    return retVal;
-  }
+  /* isAlphanum -- return true if the character is a letter, digit, underscore,
+  dollar sign, or non-ASCII character.
+  */
 
   function Pointer(input) {
     // Create an internal pointer and limit for the file
-    this.pointer = 0;
+    this.index = 0;
     this.input = input;
     this.end = input.length;
   }
   Pointer.prototype = {
+    getChar: function getChar () {
+      var index = this.index,
+          end = this.end;
+
+      // If we are at end of the file, return EOF
+      if(index === end) {
+        return EOF;
+      }
+
+      // Set the current character to our index
+      var char = this.input.charAt(index);
+
+      // Return the character
+      return char;
+    },
     /**
      * Function that returns the next important character.
      * @returns {String} Next character (length 1)
@@ -141,24 +150,20 @@ function jsmin(input, options) {
     // This function is explicity for important comments (i.e. /*! */)
     // It is possible for this to contain carriage returns and we require unaltered content since these could be licenses (main reason to use important comment).
     nextImportant: function nextImportant () {
-      var pointer = this.pointer,
-          end = this.end;
+      var char = this.getChar();
 
-      // If we are at end of the file, return EOF
-      if(pointer === end) {
-        return EOF;
+      // If we are at EOF, return immediately
+      if(isEOF(char)) {
+        return char;
       }
-
-      // Set the current character to our index
-      char = this.input.charAt(pointer);
-
-      // Increment the pointer
-      this.pointer += 1;
 
       // If the character is not of human importance (is a control character besides line feed and carraige return), cast it to a space
       if(isCtrlChar(char) && char !== '\n' && char !== '\r') {
         char = ' ';
       }
+
+      // Increment the pointer
+      this.index += 1;
 
       // Return our character
       return char;
@@ -188,7 +193,7 @@ function jsmin(input, options) {
       var nextChar = this.next();
 
       // Decrement the file pointer
-      this.pointer -= 1;
+      this.index -= 1;
 
       // Return the next character
       return nextChar;
@@ -200,6 +205,22 @@ function jsmin(input, options) {
     moveTo: function moveTo (pointer) {
       // Copy over the index
       this.index = pointer.index;
+    },
+    isAlphanum: function isAlphanumPointer () {
+      var c = this.getChar();
+      return !isEOF(c) && (ALNUM.has(c) || c.charCodeAt(0) > 126);
+    },
+    isCtrlCharRaw: function isCtrlCharRawPointer () {
+      var char = this.getChar();
+      return isCtrlCharRaw(char);
+    },
+    isEOF: function isEOFPointer () {
+      var char = this.getChar();
+      return isEOF(char);
+    },
+    isCtrlChar: function isCtrlCharPointer () {
+      var char = this.getChar();
+      return isCtrlChar(char);
     }
   };
 
@@ -326,8 +347,9 @@ function jsmin(input, options) {
       }
     }
 
-    // Otherwise, return the current character
-    return char;
+    // Otherwise, clone the current pointer and return
+    var ptr = file.clone();
+    return ptr;
   }
 
 
@@ -338,8 +360,8 @@ function jsmin(input, options) {
   action treats a string as a single character. Wow!
   action recognizes a regular expression if it is preceded by ( or , or =.
   */
-  var a = '',
-      b = '';
+  var a = new Pointer(input),
+      b = new Pointer(input);
   // DEV: a and b are characters (act like iterators as with file) so maybe objectify them
   // TODO: Add a note explaining how a <= b but they can sometimes have quite a lot of spacing between them
 
@@ -443,13 +465,12 @@ function jsmin(input, options) {
   function minify() {
     // Get the next character and delete it from the buffer
     getNextB();
-
     // While we are not at EOF
     while(!isEOF(a)) {
       // If a is whitespace
       if (a === ' ') {
         // If b is alphanumeric, output a, copy b to a, get b
-        if(isAlphanum(b)) {
+        if(b && b.isAlphanum()) {
           outputAandMoveChars();
         } else {
         // Otherwise, copy b to a, get b (skipping output of a)
@@ -467,7 +488,7 @@ function jsmin(input, options) {
         } else {
         // Otherwise
           // If b is alphanumeric, output a, copy b to a, get the next b
-          if(isAlphanum(b)) {
+          if(b && b.isAlphanum()) {
             outputAandMoveChars();
           } else {
           // Otherwise, if we are on the weakest minification and b is not a linebreak, output a
@@ -483,8 +504,9 @@ function jsmin(input, options) {
       // Otherwise (a is not whitespace or a line feed)
         // If b is whitespace
         if (b === ' ') {
+console.log(a.input);
           // If a is alphanumeric, output it, swap b to a, get the next b and break out
-          if(isAlphanum(a)) {
+          if(a && a.isAlphanum()) {
             outputAandMoveChars();
           } else {
             // Otherwise, get the next b
@@ -511,7 +533,7 @@ function jsmin(input, options) {
             } else {
             // Otherwise
               // If a is alphanumeric, output a, copy b to a, get the next b
-              if(isAlphanum(a)) {
+              if(a.isAlphanum()) {
                 outputAandMoveChars();
               } else {
               // Otherwise, get the next b
