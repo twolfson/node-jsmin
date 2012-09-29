@@ -308,13 +308,17 @@ function jsmin(input, level, comment) {
           // Remove non-head/tail asterisks as JSMin has done before
           // TODO: This is the one place where b is not a single character
 
-          // Should do a /\*/g.exec, output.add(lastIndex, end) where our startIndex is just that
-          retVal = retVal.replace(/\*/g, function removeAsterisk (word, index) {
-            return (index === 1 || index === lenMinus2) ? '*' : '';
-          });
+          // TODO: Unremove in some fashion
+          // // Should do a /\*/g.exec, output.add(lastIndex, end) where our startIndex is just that
+          // retVal = retVal.replace(/\*/g, function removeAsterisk (word, index) {
+          //   return (index === 1 || index === lenMinus2) ? '*' : '';
+          // });
 
-          // Return the retVal;
-          return retVal;
+          // // Return the retVal;
+          // return retVal;
+
+          // Temporary return
+          return ' ';
         }
 
         // Otherwise, read in the remainder of the (unimportant) multiline comment
