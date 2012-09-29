@@ -156,14 +156,7 @@ function jsmin(input, options) {
     this.end = input.length;
   }
   Pointer.prototype = {
-    /**
-     * Function that returns the next important character.
-     * @returns {String} Next character (length 1)
-     */
-    // If the character is a control character, it will be converted to a space or line feed.
-    // This function is explicity for important comments (i.e. /*! */)
-    // It is possible for this to contain carriage returns and we require unaltered content since these could be licenses (main reason to use important comment).
-    nextImportant: function nextImportant () {
+    getChar: function () {
       var index = this.index,
           end = this.end;
 
@@ -172,8 +165,24 @@ function jsmin(input, options) {
         return EOF;
       }
 
-      // Set the current character to our index
-      char = this.input.charAt(index);
+      // Otherwise, return the current character at our index
+      var char = this.input.charAt(index);
+      return char;
+    },
+    /**
+     * Function that returns the next important character.
+     * @returns {String} Next character (length 1)
+     */
+    // If the character is a control character, it will be converted to a space or line feed.
+    // This function is explicity for important comments (i.e. /*! */)
+    // It is possible for this to contain carriage returns and we require unaltered content since these could be licenses (main reason to use important comment).
+    nextImportant: function nextImportant () {
+      var char = this.getChar();
+
+      // If it is EOF, return immediately
+      if (isEOF(char)) {
+        return char;
+      }
 
       // Increment the index
       this.index += 1;
@@ -217,12 +226,20 @@ function jsmin(input, options) {
       return nextChar;
     },
     /**
+     * Move to a different index
+     * @param (Number} pointer
+     */
+    moveTo: function moveTo (index) {
+      // Set the index
+      this.index = index;
+    },
+    /**
      * Move to another pointers location
      * @param {Object<Pointer>} pointer
      */
-    moveTo: function moveTo (pointer) {
-      // Copy over the index
-      this.index = pointer.index;
+    moveToPointer: function moveToPointer (pointer) {
+      // Move to the pointer's index
+      this.moveTo(pointer.index);
     }
   };
 
@@ -246,21 +263,19 @@ function jsmin(input, options) {
   }
 
   function atEndOfMultilineComment(char) {
-    switch(char) {
-      // If it is an asterisk
-      case '*':
-        // and the character after that is a slash, then we are closing the comment
-        if(file.peek().is('/')) {
-          // Move the cursor onto this slash
-          file.next();
+    // If it is an asterisk
+    if (char.is('*')) {
+      // and the character after that is a slash, then we are closing the comment
+      if(file.peek().is('/')) {
+        // Move the cursor onto this slash
+        file.next();
 
-          // and return the final comment
-          return true;
-        }
-        break;
-      case EOF:
-      // Otherwise, if the next character is EOF, throw an error
-        throw 'Error: Unterminated comment.';
+        // and return the final comment
+        return true;
+      }
+    } else if (isEOF(char)) {
+    // Otherwise, if the next character is EOF, throw an error
+      throw 'Error: Unterminated comment.';
     }
   }
 
@@ -298,6 +313,7 @@ function jsmin(input, options) {
     // Get the next character
     var startIndex = file.index,
         char = file.next();
+console.log(file.getChar(), char);
 
     // If it is a slash (indicitvate of regexp, multi-line strings, or comments)
     if(char.is('/')) {
